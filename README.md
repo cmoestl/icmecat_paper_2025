@@ -1,8 +1,8 @@
-# ICMECAT paper 2024
+# ICMECAT paper 2025
 
-Code for producing the results and figures for the Möstl et al. 2024 ICMECAT paper.
+Code for producing the results and figures for the Möstl et al. 2025 ICMECAT paper.
 
-Everything is produced with the notebook moestl_2024_icmecat.ipynb, see instructions on top of this file.
+Everything is produced with the notebook moestl_icmecat_results.ipynb, see instructions on top of this file.
 
 Environment is helio5, see /envs.
 

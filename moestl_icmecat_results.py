@@ -8,7 +8,7 @@
 # 
 # - uses environment helio5, see /envs/env_helio5.yml in the heliocats package
 # 
-# - uses ICMECAT version 2.2., release 2025 February TBD, version ** on figshare https://doi.org/10.6084/m9.figshare.6356420.v21
+# - uses ICMECAT version 2.3., release 2025 April TBD, version ** on figshare https://doi.org/10.6084/m9.figshare.6356420.v21
 # 
 # - additionally reads in Solar Orbiter and Parker Solar Probe data from data files, available in the figshare repository: https://doi.org/10.6084/m9.figshare.11973693.v25
 # 
@@ -36,7 +36,7 @@
 # 
 # 
 
-# In[1]:
+# In[2]:
 
 
 import pickle 
@@ -72,16 +72,16 @@ scale=1/rs
 print(scale)
 
 
-os.system('jupyter nbconvert --to script moestl_2024_icmecat.ipynb')
+os.system('jupyter nbconvert --to script moestl_icmecat_results.ipynb')
 
 
 # ## load data
 
-# In[2]:
+# In[3]:
 
 
 #load icmecat as pandas dataframe
-file='icmecat/HELIO4CAST_ICMECAT_v22_pandas.p'
+file='icmecat/HELIO4CAST_ICMECAT_v23_pandas.p'
 [ic_pandas,h,p]=pickle.load( open(file, 'rb'))   
 
 ic=ic_pandas
@@ -117,7 +117,7 @@ print('done')
 
 # ### Figure (1) for ICMECAT times and distance
 
-# In[3]:
+# In[4]:
 
 
 sns.set_context("talk")     
@@ -188,7 +188,7 @@ print(527/np.size(ic.icmecat_id)*100)
 
 # ### Figure (2) Solar Orbiter example event April 2023
 
-# In[4]:
+# In[5]:
 
 
 sns.set_style('whitegrid')
@@ -308,7 +308,7 @@ print('saved as ',plotfile)
 
 # ### Figure (3) PSP magnetic fields close-to-Sun observations
 
-# In[5]:
+# In[6]:
 
 
 sns.set_style('whitegrid')
@@ -539,7 +539,7 @@ print('saved as ',plotfile)
 
 # ### B(r) curve fits in magnetic obstacle
 
-# In[6]:
+# In[7]:
 
 
 print('B(r) for MO_Bmean')
@@ -738,7 +738,7 @@ print()
 
 # ### Figure (4) B(r) power laws
 
-# In[7]:
+# In[8]:
 
 
 sns.set_context("talk")     
@@ -798,7 +798,7 @@ plt.savefig('results/fig4_br_mo.pdf', dpi=150,bbox_inches='tight')
 
 # ### Figure (5) connecting to solar observations
 
-# In[8]:
+# In[9]:
 
 
 sns.set_context("talk")     
@@ -1042,7 +1042,7 @@ plt.savefig('results/fig5_br_mo_zoom.pdf', dpi=150,bbox_inches='tight')
 
 # #### same with zoom in on close-in solar distances, for trying out power laws
 
-# In[9]:
+# In[10]:
 
 
 sns.set_context("talk")     
@@ -1245,7 +1245,7 @@ plt.savefig('results/fig5_br_mo_zoom_close.png', dpi=150,bbox_inches='tight')
 # ## solar cycle dependence
 # 
 
-# In[10]:
+# In[11]:
 
 
 #####TBD 
@@ -1256,7 +1256,7 @@ plt.savefig('results/fig5_br_mo_zoom_close.png', dpi=150,bbox_inches='tight')
 
 # #### B(r) curve fits in full ICME
 
-# In[11]:
+# In[12]:
 
 
 print('B(r) for ICME Bmean')
@@ -1348,7 +1348,7 @@ ax.plot(fitx,powerlaw(fitx,param4[0],param4[1]),'-b')
 # 
 # 
 
-# In[12]:
+# In[13]:
 
 
 print('D(r)')
