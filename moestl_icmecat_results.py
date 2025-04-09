@@ -8,9 +8,9 @@
 # 
 # - uses environment helio5, see /envs/env_helio5.yml in the heliocats package
 # 
-# - uses ICMECAT version 2.3., release 2025 April 10, version ** on figshare https://doi.org/10.6084/m9.figshare.6356420.v21
+# - uses ICMECAT version 2.3., release 2025 April 9, version 22 on figshare https://doi.org/10.6084/m9.figshare.6356420.v22
 # 
-# - additionally reads in Solar Orbiter and Parker Solar Probe data from data files, available in the figshare repository: https://doi.org/10.6084/m9.figshare.11973693.v25
+# - additionally reads in Solar Orbiter and Parker Solar Probe data from data files, available in the figshare repository version ***: https://doi.org/10.6084/m9.figshare.11973693.v25
 # 
 # 
 # TBD:
@@ -18,6 +18,7 @@
 # 
 # - power laws for solar min vs max
 # - power laws for each B component, check differences
+# 
 # #### papers to check:
 # 
 # decay index profiles for ARs, but only in AR, too close
@@ -27,16 +28,10 @@
 # https://link.springer.com/article/10.1007/s11207-006-0265-4
 # 
 # 
-# - colors:
-# 
-# c0 = "xkcd:black"
-# c1 = "xkcd:magenta"
-# c2 = "xkcd:orange"
-# c3 = "xkcd:azure"
 # 
 # 
 
-# In[ ]:
+# In[1]:
 
 
 import pickle 
@@ -70,6 +65,14 @@ print(rs)
 #scaling factor au to Rs
 scale=1/rs
 print(scale)
+
+#colors:
+
+c0 = "xkcd:black"
+c1 = "xkcd:magenta"
+c2 = "xkcd:orange"
+c3 = "xkcd:azure"
+
 
 
 os.system('jupyter nbconvert --to script moestl_icmecat_results.ipynb')
