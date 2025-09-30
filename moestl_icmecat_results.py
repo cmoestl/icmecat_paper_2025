@@ -1,37 +1,36 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# ## Results for Möstl et al. (2025) ICMECAT paper
+# ## Results for Möstl et al. (2026) ICMECAT paper
 # 
 # 
-# script to produce paper results for the ICMECAT paper Möstl et al. 2025, ApJL
+# script to produce paper results for the ICMECAT paper Möstl et al. 2025 or 2026, ApJL
 # 
 # - uses environment helio5, see /envs/env_helio5.yml in the heliocats package
 # 
-# - uses ICMECAT version 2.3., release 2025 April 9, version 22 on figshare https://doi.org/10.6084/m9.figshare.6356420.v22
+# - uses ICMECAT version 2.3., release 2025 April 9, update 2025 October *** version TBD on figshare *************** https://doi.org/10.6084/m9.figshare.6356420
 # 
-# - additionally reads in Solar Orbiter and Parker Solar Probe data from data files, available in the figshare repository version ***: https://doi.org/10.6084/m9.figshare.11973693.v25
-# 
-# 
-# TBD:
+# - additionally reads in Solar Orbiter and Parker Solar Probe data from data files, available in the figshare repository version ***: https://doi.org/10.6084/m9.figshare.11973693.v25 ** TB changed
 # 
 # 
-# - power laws for solar min vs max
-# - power laws for each B component, check differences
+# To do list:
 # 
-# #### papers to check:
+# - power laws for each B component
+# - write up paper
 # 
-# decay index profiles for ARs, but only in AR, too close
+# #### papers:
+# 
+# - decay index profiles for ARs, but only in AR, too close
 # https://iopscience.iop.org/article/10.3847/1538-4357/ac5b06
 # 
-# sunspot field strength at 1 solar radii
+# - sunspot field strength at 1 solar radii
 # https://link.springer.com/article/10.1007/s11207-006-0265-4
 # 
 # 
 # 
 # 
 
-# In[1]:
+# In[6]:
 
 
 import pickle 
@@ -80,7 +79,7 @@ os.system('jupyter nbconvert --to script moestl_icmecat_results.ipynb')
 
 # ## load data
 
-# In[2]:
+# In[7]:
 
 
 #load icmecat as pandas dataframe
@@ -123,7 +122,7 @@ ic
 
 # ### Figure (1) for ICMECAT times and distance
 
-# In[3]:
+# In[8]:
 
 
 sns.set_context("talk")     
@@ -184,17 +183,17 @@ print('How many events')
 print(np.size(ic.icmecat_id))
 
 print('events from us, MOESTL or WEILER, look up from catalog online')
-print('527')
+print('731')
 
 print('percentage')
-print(527/np.size(ic.icmecat_id)*100)
+print(731/np.size(ic.icmecat_id)*100)
 
-
+print('events without ulysses', len(ic)-len(iuly))
 
 
 # ### Figure (2) Solar Orbiter example event April 2023
 
-# In[4]:
+# In[9]:
 
 
 sns.set_style('whitegrid')
@@ -314,7 +313,7 @@ print('saved as ',plotfile)
 
 # ### Figure (3) PSP magnetic fields close-to-Sun observations
 
-# In[5]:
+# In[10]:
 
 
 sns.set_style('whitegrid')
@@ -418,7 +417,7 @@ ax1.legend(loc=3,ncol=4,fontsize=8)
 
 
 #################################
-ax2 = plt.subplot(323) 
+ax2 = plt.subplot(326) 
 ax2.plot_date(sc2.time,sc2.bx,'-r',label='Bx',linewidth=lw)
 ax2.plot_date(sc2.time,sc2.by,'-g',label='By',linewidth=lw)
 ax2.plot_date(sc2.time,sc2.bz,'-b',label='Bz',linewidth=lw)
@@ -498,7 +497,7 @@ ax5.set_xlim(datetime.datetime(2023,3,13,3),datetime.datetime(2023,3,13,22))
 
 
 #################################
-ax6 = plt.subplot(326) 
+ax6 = plt.subplot(323) 
 ax6.plot_date(sc6.time,sc6.bx,'-r',label='Bx',linewidth=lw)
 ax6.plot_date(sc6.time,sc6.by,'-g',label='By',linewidth=lw)
 ax6.plot_date(sc6.time,sc6.bz,'-b',label='Bz',linewidth=lw)
@@ -545,7 +544,7 @@ print('saved as ',plotfile)
 
 # ### B(r) curve fits in magnetic obstacle
 
-# In[6]:
+# In[11]:
 
 
 print('B(r) for MO_Bmean')
@@ -558,6 +557,13 @@ rem=np.where(np.logical_or(np.isnan(r), np.isnan(b)))[0]
 
 r=r.drop(rem)
 b=b.drop(rem)
+
+
+#remove ulysses
+r=r.drop(iuly)
+b=b.drop(iuly)
+
+
 
 
 rs=1*const.R_sun/const.au
@@ -623,6 +629,12 @@ rem=np.where(np.logical_or(np.isnan(r), np.isnan(b)))[0]
 
 r=r.drop(rem)
 b=b.drop(rem)
+
+
+#remove ulysses
+r=r.drop(iuly)
+b=b.drop(iuly)
+
 
 fit2_lm=scipy.optimize.curve_fit(powerlaw, r,b,method='lm',full_output=True)
 fit2_trf=scipy.optimize.curve_fit(powerlaw, r,b,method='trf')
@@ -744,7 +756,7 @@ print()
 
 # ### Figure (4) B(r) power laws
 
-# In[7]:
+# In[12]:
 
 
 sns.set_context("talk")     
@@ -767,7 +779,7 @@ ax.plot(ic.mo_sc_heliodistance[ista],ic.mo_bmean[ista],'o',c='red', alpha=al,ms=
 
 ax.plot(ic.mo_sc_heliodistance[imes],ic.mo_bmean[imes],'o',c='coral', alpha=al,ms=ms,label='MESSENGER')
 ax.plot(ic.mo_sc_heliodistance[ivex],ic.mo_bmean[ivex],'o',c='orange', alpha=al,ms=ms,label='Venus Express')
-ax.plot(ic.mo_sc_heliodistance[iuly],ic.mo_bmean[iuly],'o',c='chocolate', alpha=al,ms=ms, label='Ulysses')
+#ax.plot(ic.mo_sc_heliodistance[iuly],ic.mo_bmean[iuly],'o',c='chocolate', alpha=al,ms=ms, label='Ulysses')
 ax.plot(ic.mo_sc_heliodistance[imav],ic.mo_bmean[imav],'o',c='orangered', alpha=al,ms=ms, label='MAVEN')
 ax.plot(ic.mo_sc_heliodistance[istb],ic.mo_bmean[istb],'o',c='royalblue', alpha=al,ms=ms, label='STEREO-B')
 ax.plot(ic.mo_sc_heliodistance[ijun],ic.mo_bmean[ijun],'o', c='black',markerfacecolor='yellow', alpha=al,ms=ms, label='Juno')
@@ -782,9 +794,9 @@ ax.set_yscale('log')
 
 ########### plot fits
 ax.plot(fitx,powerlaw(fitx,param[0],param[1]),'-k', zorder=5, label='<$B_{MO}$> fit')
-#with errors 3 std
-ax.plot(fitx,powerlaw(fitx,param[0]-3*perr[0],fit_lm[0][1])-3*perr[0],'--k',alpha=0.5, zorder=5)
-ax.plot(fitx,powerlaw(fitx,param[0]+3*perr[0],fit_lm[0][1])+3*perr[0],'--k',alpha=0.5, zorder=5)
+#with errors 2 std
+ax.plot(fitx,powerlaw(fitx,param[0]-2*perr[0],fit_lm[0][1])-2*perr[0],'--k',alpha=0.5, zorder=5)
+ax.plot(fitx,powerlaw(fitx,param[0]+2*perr[0],fit_lm[0][1])+2*perr[0],'--k',alpha=0.5, zorder=5)
 
 ax.plot(fitx,powerlaw(fitx,param2[0],param2[1]),'-r', zorder=5, label='max($B_{MO}$) fit')
 
@@ -804,7 +816,7 @@ plt.savefig('results/fig4_br_mo.pdf', dpi=150,bbox_inches='tight')
 
 # ### Figure (5) connecting to solar observations
 
-# In[8]:
+# In[13]:
 
 
 sns.set_context("talk")     
@@ -1048,7 +1060,7 @@ plt.savefig('results/fig5_br_mo_zoom.pdf', dpi=150,bbox_inches='tight')
 
 # #### same with zoom in on close-in solar distances, for trying out power laws
 
-# In[9]:
+# In[14]:
 
 
 sns.set_context("talk")     
@@ -1251,7 +1263,7 @@ plt.savefig('results/fig5_br_mo_zoom_close.png', dpi=150,bbox_inches='tight')
 # ## solar cycle dependence
 # 
 
-# In[10]:
+# In[18]:
 
 
 #####TBD 
@@ -1262,7 +1274,7 @@ plt.savefig('results/fig5_br_mo_zoom_close.png', dpi=150,bbox_inches='tight')
 
 # #### B(r) curve fits in full ICME
 
-# In[11]:
+# In[19]:
 
 
 print('B(r) for ICME Bmean')
@@ -1354,7 +1366,7 @@ ax.plot(fitx,powerlaw(fitx,param4[0],param4[1]),'-b')
 # 
 # 
 
-# In[12]:
+# In[20]:
 
 
 print('D(r)')
@@ -1448,7 +1460,7 @@ ax.plot(fitx,powerlaw(fitx,param[0]+3*perr[0],fit_lm[0][1])+3*perr[0],'--b',alph
 
 # ### some general statistics
 
-# In[13]:
+# In[21]:
 
 
 ic.keys()
@@ -1473,7 +1485,7 @@ print(au/800/60/100)
 print(au/2000/60/100)
 
 
-# In[14]:
+# In[22]:
 
 
 ic.keys()
