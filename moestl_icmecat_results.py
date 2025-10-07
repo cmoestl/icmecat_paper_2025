@@ -4,21 +4,24 @@
 # ## Results for Möstl et al. (2026) ICMECAT paper
 # 
 # 
-# script to produce paper results for the ICMECAT paper Möstl et al. 2025 or 2026, ApJL
+# script to produce paper results for the ICMECAT paper Möstl et al. 2026, to be submitted to ApJL
 # 
-# - uses environment helio5, see /envs/env_helio5.yml in the heliocats package
-# 
+# - uses environment dro, see /envs/env_dro.yml
+#  
 # - uses ICMECAT version 2.3., release 2025 April 9, update 2025 October *** version TBD on figshare *************** https://doi.org/10.6084/m9.figshare.6356420
 # 
 # - additionally reads in Solar Orbiter and Parker Solar Probe data from data files, available in the figshare repository version ***: https://doi.org/10.6084/m9.figshare.11973693.v25 ** TB changed
 # 
+# ---
+# ### To do 
 # 
-# To do list:
-# 
+# - ICMECAT publish, check for errors, include 2025 Sep 1 at L1 
 # - power laws for each B component
 # - write up paper
 # 
-# #### papers:
+# 
+# ---
+# ### papers
 # 
 # - decay index profiles for ARs, but only in AR, too close
 # https://iopscience.iop.org/article/10.3847/1538-4357/ac5b06
@@ -30,7 +33,7 @@
 # 
 # 
 
-# In[6]:
+# In[49]:
 
 
 import pickle 
@@ -48,38 +51,33 @@ import copy
 import astropy.constants as const
 from sunpy.time import parse_time
 
-
-print(os.system('pwd'))
-
 print(scipy.__version__) #for fitting algorithm
 
-
+#define powerlaw
 def powerlaw(x, a, b):
     return a*x**b
 
 #one solar radius in au
 rs=(const.R_sun/const.au).value
 print(rs)
-
 #scaling factor au to Rs
 scale=1/rs
 print(scale)
 
-#colors:
 
+#colors:
 c0 = "xkcd:black"
 c1 = "xkcd:magenta"
 c2 = "xkcd:orange"
 c3 = "xkcd:azure"
 
-
-
 os.system('jupyter nbconvert --to script moestl_icmecat_results.ipynb')
+print(os.system('pwd'))
 
 
 # ## load data
 
-# In[7]:
+# In[50]:
 
 
 #load icmecat as pandas dataframe
@@ -88,7 +86,7 @@ file='icmecat/HELIO4CAST_ICMECAT_v23_pandas.p'
 
 ic=ic_pandas
 
-ic_mo_start_time_num=parse_time(ic.mo_start_time).plot_date
+ic_mo_start_time_num=parse_time(ic.mo_start_time)
 
 #get indices for each target
 imes=np.where(ic.sc_insitu=='MESSENGER')[0]
@@ -116,39 +114,96 @@ filesolo='solo_2020_now_rtn.p'
 [solo,hsolo]=pickle.load(open('data/'+filesolo, "rb" ) )    
 print('done')
 
+## load positions file (< 100 MB)
+
+[psppos, bepi, solopos, sta, juice, earth, mercury, venus, mars, jupiter, saturn, uranus, neptune,l4,l5]=pickle.load( open( 'positions/positions_2020_all_HEEQ_1h_rad_cm.p', "rb" ) ) 
+print('positions file loaded')
+
+
+# ### Basic ICMECAT statistics
+
+# In[66]:
+
+
 print('Number of events in ICMECAT', len(ic))
-ic
+
+print('minimum of PSP distance')
+print(np.min(psppos.r))
+
+print('earliest and latest time')
+print(np.min(ic.icme_start_time))
+print(np.max(ic.icme_start_time))
+
+print('How many events')
+print(np.size(ic.icmecat_id))
+
+print('events from us, MOESTL or WEILER, look up from catalog online')
+
+ourevents=731+75 ###*CHECK
+print(ourevents)
+
+print('percentage')
+print(ourevents/np.size(ic.icmecat_id)*100)
+
+print('events without ulysses', len(ic)-len(iuly))
+
+
+#get indices for each target
+imes=np.where(ic.sc_insitu=='MESSENGER')[0]
+ivex=np.where(ic.sc_insitu=='VEX')[0]
+iwin=np.where(ic.sc_insitu=='Wind')[0]
+imav=np.where(ic.sc_insitu=='MAVEN')[0]
+ijun=np.where(ic.sc_insitu=='Juno')[0]
+
+ista=np.where(ic.sc_insitu=='STEREO-A')[0]
+istb=np.where(ic.sc_insitu=='STEREO-B')[0]
+ipsp=np.where(ic.sc_insitu=='PSP')[0]
+isol=np.where(ic.sc_insitu=='SolarOrbiter')[0]
+ibep=np.where(ic.sc_insitu=='BepiColombo')[0]
+iuly=np.where(ic.sc_insitu=='ULYSSES')[0]
+
+print('closest events of PSP and SolO to sun')
+print()
+print('PSP')
+print(np.sort(ic.mo_sc_heliodistance[ipsp][0:15]))
+print(np.argsort(ic.mo_sc_heliodistance[ipsp]))
+
+#sorted indices
+sortclose=np.argsort(ic.mo_sc_heliodistance[ipsp])
+print(ic.icmecat_id[sortclose])
+print()
+
+print('SolO')
+print(np.sort(ic.mo_sc_heliodistance[isol])[0:15])
 
 
 # ### Figure (1) for ICMECAT times and distance
 
-# In[8]:
+# In[37]:
 
 
-sns.set_context("talk")     
+sns.set_context("paper")     
 sns.set_style('whitegrid')
 
-fig=plt.figure(3,figsize=(13,7),dpi=200)
+fig=plt.figure(3,figsize=(14,10),dpi=100)
 
-ax1=plt.subplot(111)
-
+###########################################################
+ax1=plt.subplot(221)
 ms=5
 al=0.8
 
+ax1.plot(ic.mo_start_time[ipsp],ic.mo_sc_heliodistance[ipsp],'o',c='black', alpha=al,ms=ms,label='Parker Solar Probe')
+ax1.plot(ic.mo_start_time[isol],ic.mo_sc_heliodistance[isol],'o',c='black',markerfacecolor='white', alpha=1.0,ms=ms,label='Solar Orbiter')
+ax1.plot(ic.mo_start_time[ibep],ic.mo_sc_heliodistance[ibep],'o',c='darkblue',markerfacecolor='lightgrey', alpha=al,ms=ms,label='BepiColombo')
+ax1.plot(ic.mo_start_time[imav],ic.mo_sc_heliodistance[imav],'o',c='orangered', alpha=al,ms=ms,label='MAVEN')
+ax1.plot(ic.mo_start_time[ista],ic.mo_sc_heliodistance[ista],'o',c='red', alpha=al,ms=ms, label='STEREO-A')
 
-ax1.plot_date(ic_mo_start_time_num[ipsp],ic.mo_sc_heliodistance[ipsp],'o',c='black', alpha=al,ms=ms,label='Parker Solar Probe')
-ax1.plot_date(ic_mo_start_time_num[isol],ic.mo_sc_heliodistance[isol],'o',c='black',markerfacecolor='white', alpha=1.0,ms=ms,label='Solar Orbiter')
-ax1.plot_date(ic_mo_start_time_num[ibep],ic.mo_sc_heliodistance[ibep],'o',c='darkblue',markerfacecolor='lightgrey', alpha=al,ms=ms,label='BepiColombo')
-ax1.plot_date(ic_mo_start_time_num[imav],ic.mo_sc_heliodistance[imav],'o',c='orangered', alpha=al,ms=ms,label='MAVEN')
-ax1.plot_date(ic_mo_start_time_num[ista],ic.mo_sc_heliodistance[ista],'o',c='red', alpha=al,ms=ms, label='STEREO-A')
-
-ax1.plot_date(ic_mo_start_time_num[imes],ic.mo_sc_heliodistance[imes],'o',c='coral', alpha=al,ms=ms,label='MESSENGER')
-ax1.plot_date(ic_mo_start_time_num[ivex],ic.mo_sc_heliodistance[ivex],'o',c='orange', alpha=al,ms=ms,label='Venus Express')
-ax1.plot_date(ic_mo_start_time_num[istb],ic.mo_sc_heliodistance[istb],'o',c='royalblue', alpha=al,ms=ms,label='STEREO-B')
-ax1.plot_date(ic_mo_start_time_num[iwin],ic.mo_sc_heliodistance[iwin],'o',c='mediumseagreen', alpha=al,ms=ms,label='Wind')
-ax1.plot_date(ic_mo_start_time_num[ijun],ic.mo_sc_heliodistance[ijun],'o',c='black',markerfacecolor='yellow', alpha=1,ms=ms,label='Juno')
-ax1.plot_date(ic_mo_start_time_num[iuly],ic.mo_sc_heliodistance[iuly],'o',c='chocolate', alpha=al,ms=ms,label='Ulysses')
-
+ax1.plot(ic.mo_start_time[imes],ic.mo_sc_heliodistance[imes],'o',c='coral', alpha=al,ms=ms,label='MESSENGER')
+ax1.plot(ic.mo_start_time[ivex],ic.mo_sc_heliodistance[ivex],'o',c='orange', alpha=al,ms=ms,label='Venus Express')
+ax1.plot(ic.mo_start_time[istb],ic.mo_sc_heliodistance[istb],'o',c='royalblue', alpha=al,ms=ms,label='STEREO-B')
+ax1.plot(ic.mo_start_time[iwin],ic.mo_sc_heliodistance[iwin],'o',c='mediumseagreen', alpha=al,ms=ms,label='Wind')
+ax1.plot(ic.mo_start_time[ijun],ic.mo_sc_heliodistance[ijun],'o',c='black',markerfacecolor='yellow', alpha=1,ms=ms,label='Juno')
+ax1.plot(ic.mo_start_time[iuly],ic.mo_sc_heliodistance[iuly],'o',c='chocolate', alpha=al,ms=ms,label='Ulysses')
 
 ax1.set_ylabel('Heliocentric distance $r$ [au]')
 ax1.set_xlabel('Year')
@@ -161,39 +216,128 @@ ax1.xaxis.set_major_formatter(myformat)
 #ax1.tick_params(axis="x", labelsize=12)
 #ax1.tick_params(axis="y", labelsize=12)
 
-ax1.set_xlim([datetime.datetime(1990,1,1),datetime.datetime(2025,1,1)])
-
-
-ax1.legend(loc=1,fontsize=14)
+ax1.set_xlim([datetime.datetime(1990,1,1),datetime.datetime(2025,12,1)])
+#ax1.legend(loc=1,fontsize=14)
 
 ax1.set_yticks(np.arange(0,6,0.5))
 ax1.set_ylim([0,5.5])
 
+
+##############################################################
+
+ax4=plt.subplot(222,projection='polar')
+
+ax4.plot(np.radians(ic.mo_sc_long_heeq[iuly]),ic.mo_sc_heliodistance[iuly],'o',markersize=ms,c='brown', alpha=al, label='Ulysses')
+ax4.plot(np.radians(ic.mo_sc_long_heeq[imav]),ic.mo_sc_heliodistance[imav],'o',markersize=ms,c='orangered', alpha=al, label='MAVEN')
+ax4.plot(np.radians(ic.mo_sc_long_heeq[imes]),ic.mo_sc_heliodistance[imes],'o',markersize=ms,c='coral', alpha=al,label='MESSENGER')
+ax4.plot(np.radians(ic.mo_sc_long_heeq[ivex]),ic.mo_sc_heliodistance[ivex],'o',markersize=ms,c='orange', alpha=al,label='Venus Express')
+ax4.plot(np.radians(ic.mo_sc_long_heeq[istb]),ic.mo_sc_heliodistance[istb],'o',markersize=ms,c='royalblue', alpha=al,label='STEREO-B')
+ax4.plot(np.radians(ic.mo_sc_long_heeq[ijun]),ic.mo_sc_heliodistance[ijun],'o',markersize=ms,c='black',markerfacecolor='yellow',alpha=al,label='Juno')
+ax4.plot(np.radians(ic.mo_sc_long_heeq[ista]),ic.mo_sc_heliodistance[ista],'o',markersize=ms, c='red', alpha=al, label='STEREO-A')
+ax4.plot(np.radians(ic.mo_sc_long_heeq[iwin]),ic.mo_sc_heliodistance[iwin],'o',markersize=ms, c='mediumseagreen', alpha=al, label='Wind')
+ax4.plot(np.radians(ic.mo_sc_long_heeq[ipsp]),ic.mo_sc_heliodistance[ipsp],'o',markersize=ms, c='black', alpha=al,label='Parker Solar Probe')
+ax4.plot(np.radians(ic.mo_sc_long_heeq[isol]),ic.mo_sc_heliodistance[isol],'o',markersize=ms, c='black',markerfacecolor='white', alpha=al, label='Solar Orbiter')
+ax4.plot(np.radians(ic.mo_sc_long_heeq[ibep]),ic.mo_sc_heliodistance[ibep],'o',markersize=ms, c='darkblue',markerfacecolor='lightgrey', alpha=al, label='BepiColombo')
+
+fsize=10
+frame='HEEQ'
+backcolor='white'
+plt.rgrids((0.1,0.2,0.3,0.4,0.6,0.8,1.0,1.2, 1.4,1.6,1.8,2.0),('','0.2','','0.4','0.6','0.8','1.0','1.2','1.4','','',''),angle=180, fontsize=fsize-4,alpha=0.8, ha='center',color=backcolor,zorder=5)
+plt.thetagrids(range(0,360,45),(u'0\u00b0',u'45\u00b0',u'90\u00b0',u'135\u00b0',u'±180\u00b0',u'- 135\u00b0',u'- 90\u00b0',u'- 45\u00b0'), fmt='%d',ha='center',fontsize=fsize,color=backcolor, zorder=5, alpha=1.0)
+
+ax4.set_ylim([0,1.6])
+ax4.text(0,0,'Sun', color='black', ha='center',fontsize=fsize-5,verticalalignment='top')
+ax4.text(0,1.1,'Earth', color='green', ha='center',fontsize=fsize-5,verticalalignment='center')
+ax4.scatter(0,0,s=100,c='yellow',alpha=1, edgecolors='black', linewidth=0.3)
+
+
+ax4.legend(bbox_to_anchor=(-0.35, 1.05),loc='upper left', fontsize=9)
+
+##############################################################
+ax2=plt.subplot(223)
+
+ms=5
+al=0.7
+
+ax2.plot(ic.mo_start_time[iwin],ic.mo_sc_heliodistance[iwin],'o',c='mediumseagreen', alpha=al,ms=ms)
+ax2.plot(ic.mo_start_time[ista],ic.mo_sc_heliodistance[ista],'o',c='red', alpha=al,ms=ms)
+ax2.plot(ic.mo_start_time[ipsp],ic.mo_sc_heliodistance[ipsp],'o',c='black', alpha=al,ms=ms)
+ax2.plot(ic.mo_start_time[isol],ic.mo_sc_heliodistance[isol],'o',c='black',markerfacecolor='white', alpha=1.0,ms=ms)
+ax2.plot(ic.mo_start_time[ibep],ic.mo_sc_heliodistance[ibep],'o',c='darkblue',markerfacecolor='lightgrey', alpha=al,ms=ms)
+
+#from data
+#psp
+ax2.plot(psp.time,psp.r,'k-',alpha=0.5)   ###########******* dont double plot for the beginning ********
+ax2.plot(psppos.time,psppos.r,'k-',alpha=0.5)
+
+ax2.set_ylabel('Heliocentric distance $r$ [au]')
+ax2.set_yticks(np.arange(0,6,0.1))
+ax2.set_ylim([0,1.1])
+#ax1.tick_params(axis="y", labelsize=12)
+
+ax2.set_xlabel('Year')
+years = mdates.YearLocator(1)   # every year
+ax2.xaxis.set_major_locator(years)
+myformat = mdates.DateFormatter('%Y')
+ax2.xaxis.set_major_formatter(myformat)
+
+#ax1.tick_params(axis="x", labelsize=12)
+
+#ax1.set_xlim([datetime.datetime(2007,1,1),datetime.datetime.utcnow()+datetime.timedelta(days=50)])
+
+
+ax2.set_xlim([datetime.datetime(2018,1,1),datetime.datetime(2030,1,1)])
+
+
+
+##############################################################################
+ax3=plt.subplot(224)
+#plt.title('ICMECAT event times and latitude')
+ax3.set_xlabel('Year')
+ax3.set_ylabel('latitude HEEQ [degrees]')
+
+ax3.plot(ic.mo_start_time[iwin],ic.mo_sc_lat_heeq[iwin],'o',c='mediumseagreen', alpha=al,ms=ms, label='Wind')
+ax3.plot(ic.mo_start_time[ista],ic.mo_sc_lat_heeq[ista],'o',c='red', alpha=al,ms=ms, label='STEREO-A')
+ax3.plot(ic.mo_start_time[ipsp],ic.mo_sc_lat_heeq[ipsp],'o',c='black', alpha=al,ms=ms, label='Parker Solar Probe')
+ax3.plot(ic.mo_start_time[isol],ic.mo_sc_lat_heeq[isol],'o',c='black',markerfacecolor='white', alpha=1.0,ms=ms, label='Solar Orbiter')
+ax3.plot(ic.mo_start_time[ibep],ic.mo_sc_lat_heeq[ibep],'o',c='darkblue',markerfacecolor='lightgrey', alpha=al,ms=ms, label='BepiColombo')
+
+#solar orbiter
+ax3.plot(solopos.time,np.rad2deg(solopos.lat),'g-', alpha=0.5)
+
+ax3.set_xlim([datetime.datetime(2018,1,1),datetime.datetime(2030,1,1)])
+#ax3.set_xticks(np.arange(0,6,0.5))
+#ax3.tick_params(axis="x", labelsize=12)
+#ax3.set_xlim([0,5.6])
+
+#ax3.set_yscale('log')
+#ax3.set_ylim([0,np.max(ic.mo_bmean)+50])
+ax3.set_yticks(np.arange(-90,90,10))
+ax3.set_ylim([-40,40])
+#ax3.tick_params(axis="y", labelsize=12)
+
+ax3.set_xlabel('Year')
+years = mdates.YearLocator(1)   # every year
+ax3.xaxis.set_major_locator(years)
+myformat = mdates.DateFormatter('%Y')
+ax3.xaxis.set_major_formatter(myformat)
+ax3.legend(loc='upper left',fontsize=12)#, rows=2)
+
+################################
+
 plt.tight_layout()
+plt.annotate('(a)',xy=(0.02,0.97),xycoords='figure fraction',fontsize=13,ha='center')
+plt.annotate('(b)',xy=(0.49,0.97),xycoords='figure fraction',fontsize=13,ha='center')
+plt.annotate('(c)',xy=(0.02,0.48),xycoords='figure fraction',fontsize=13,ha='center')
+plt.annotate('(d)',xy=(0.49,0.48),xycoords='figure fraction',fontsize=13,ha='center')
+
 plt.savefig('results/fig1_icmecat_obs.png', dpi=150,bbox_inches='tight')
 plt.savefig('results/fig1_icmecat_obs.pdf', dpi=150,bbox_inches='tight')
 
 
-print('earliest and latest time')
-
-print(np.min(ic.icme_start_time))
-print(np.max(ic.icme_start_time))
-
-print('How many events')
-print(np.size(ic.icmecat_id))
-
-print('events from us, MOESTL or WEILER, look up from catalog online')
-print('731')
-
-print('percentage')
-print(731/np.size(ic.icmecat_id)*100)
-
-print('events without ulysses', len(ic)-len(iuly))
-
-
 # ### Figure (2) Solar Orbiter example event April 2023
 
-# In[9]:
+# In[38]:
 
 
 sns.set_style('whitegrid')
@@ -219,15 +363,15 @@ lw=1.1
 
 ax1 = plt.subplot(411) 
 
-ax1.plot_date(sc.time,sc.bx,'-r',label='$B_{R}$',linewidth=lw)
-ax1.plot_date(sc.time,sc.by,'-g',label='$B_{T}$',linewidth=lw)
-ax1.plot_date(sc.time,sc.bz,'-b',label='$B_{N}$',linewidth=lw)
-ax1.plot_date(sc.time,sc.bt,'-k',label='$|B|$',lw=lw)
-    
+ax1.plot(sc.time,sc.bx,'-r',label='$B_{R}$',linewidth=lw)
+ax1.plot(sc.time,sc.by,'-g',label='$B_{T}$',linewidth=lw)
+ax1.plot(sc.time,sc.bz,'-b',label='$B_{N}$',linewidth=lw)
+ax1.plot(sc.time,sc.bt,'-k',label='$|B|$',lw=lw)
+
 ######## plot vertical lines
-ax1.plot_date([ic.icme_start_time[i],ic.icme_start_time[i]],[-500,500],'-k',linewidth=1)            
-ax1.plot_date([ic.mo_start_time[i],ic.mo_start_time[i]],[-500,500],'-k',linewidth=1)            
-ax1.plot_date([ic.mo_end_time[i],ic.mo_end_time[i]],[-500,500],'-k',linewidth=1)
+ax1.plot([ic.icme_start_time[i],ic.icme_start_time[i]],[-500,500],'-k',linewidth=1)            
+ax1.plot([ic.mo_start_time[i],ic.mo_start_time[i]],[-500,500],'-k',linewidth=1)            
+ax1.plot([ic.mo_end_time[i],ic.mo_end_time[i]],[-500,500],'-k',linewidth=1)
 
 plt.ylabel('B [nT] RTN')
 plt.legend(loc=3,ncol=4,fontsize=9)
@@ -242,7 +386,7 @@ plt.setp(ax1.get_xticklabels(), visible=False)
 
 #########
 ax2 = plt.subplot(412,sharex=ax1) 
-ax2.plot_date(sc.time,sc.vt,'-k',label='V',linewidth=lw)
+ax2.plot(sc.time,sc.vt,'-k',label='V',linewidth=lw)
 
 plt.ylabel('V [km s$^{-1}$]')
 ax2.set_xlim(start,end)
@@ -254,13 +398,13 @@ plt.ylim((250, 700))
 #ax2.set_xticklabels([])
 plt.setp(ax2.get_xticklabels(), visible=False)
 
-ax2.plot_date([ic.icme_start_time[i],ic.icme_start_time[i]],[0,3000],'-k',linewidth=1)            
-ax2.plot_date([ic.mo_start_time[i],ic.mo_start_time[i]],[0,3000],'-k',linewidth=1)            
-ax2.plot_date([ic.mo_end_time[i],ic.mo_end_time[i]],[0,3000],'-k',linewidth=1)     
+ax2.plot([ic.icme_start_time[i],ic.icme_start_time[i]],[0,3000],'-k',linewidth=1)            
+ax2.plot([ic.mo_start_time[i],ic.mo_start_time[i]],[0,3000],'-k',linewidth=1)            
+ax2.plot([ic.mo_end_time[i],ic.mo_end_time[i]],[0,3000],'-k',linewidth=1)     
 
 #########
 ax3 = plt.subplot(413,sharex=ax1) 
-ax3.plot_date(sc.time,sc.np,'-k',label='Np',linewidth=lw)
+ax3.plot(sc.time,sc.np,'-k',label='Np',linewidth=lw)
 
 plt.ylabel('N [ccm$^{-3}]$')
 ax3.set_xlim(start,end)
@@ -270,14 +414,14 @@ plt.ylim((0, 1200))
 plt.setp(ax3.get_xticklabels(), visible=False)
 
 #plot vertical lines
-ax3.plot_date([ic.icme_start_time[i],ic.icme_start_time[i]],[0,10000],'-k',linewidth=1)
-ax3.plot_date([ic.mo_start_time[i],  ic.mo_start_time[i]],  [0,10000],'-k',linewidth=1)
-ax3.plot_date([ic.mo_end_time[i],ic.mo_end_time[i]],        [0,10000],'-k',linewidth=1)   
+ax3.plot([ic.icme_start_time[i],ic.icme_start_time[i]],[0,10000],'-k',linewidth=1)
+ax3.plot([ic.mo_start_time[i],  ic.mo_start_time[i]],  [0,10000],'-k',linewidth=1)
+ax3.plot([ic.mo_end_time[i],ic.mo_end_time[i]],        [0,10000],'-k',linewidth=1)   
 
 
 #############
 ax4 = plt.subplot(414,sharex=ax1) 
-ax4.plot_date(sc.time,sc.tp/1e6,'-k',label='Tp',linewidth=lw)
+ax4.plot(sc.time,sc.tp/1e6,'-k',label='Tp',linewidth=lw)
 
 plt.ylabel('T [MK]')
 ax4.set_xlim(start,end)
@@ -286,9 +430,9 @@ ax4.xaxis.set_major_formatter( matplotlib.dates.DateFormatter('%b-%d %Hh') )
 plt.ylim((0, 0.8))
 
 #plot vertical lines
-ax4.plot_date([ic.icme_start_time[i],ic.icme_start_time[i]],[0,100],'-k',linewidth=1)            
-ax4.plot_date([ic.mo_start_time[i],ic.mo_start_time[i]],[0,100],'-k',linewidth=1)            
-ax4.plot_date([ic.mo_end_time[i],ic.mo_end_time[i]],[0,100],'-k',linewidth=1)            
+ax4.plot([ic.icme_start_time[i],ic.icme_start_time[i]],[0,100],'-k',linewidth=1)            
+ax4.plot([ic.mo_start_time[i],ic.mo_start_time[i]],[0,100],'-k',linewidth=1)            
+ax4.plot([ic.mo_end_time[i],ic.mo_end_time[i]],[0,100],'-k',linewidth=1)            
 
 
 ax1.annotate('Solar Orbiter MAG',xy=(0.85,0.09),xycoords='axes fraction',fontsize=11,ha='center',bbox=dict(boxstyle='round', facecolor='white') )
@@ -313,7 +457,7 @@ print('saved as ',plotfile)
 
 # ### Figure (3) PSP magnetic fields close-to-Sun observations
 
-# In[10]:
+# In[39]:
 
 
 sns.set_style('whitegrid')
@@ -321,10 +465,7 @@ sns.set_context('paper')
 
 fig=plt.figure(figsize=(12,10), dpi=150)
 
-
 #extract PSP event data
-
-
 i1=np.where(ic.icmecat_id=='ICME_PSP_MOESTL_20181030_01')[0][0]
 starttime1=ic.icme_start_time[i1]
 endtime1=ic.mo_end_time[i1]
@@ -332,8 +473,6 @@ startind1=np.where(starttime1 > psp.time)[0][-1]
 endind1=np.where(endtime1 > psp.time)[0][-1]
 sc1=psp[startind1-1000:endind1+1000]
 print('Event 1 min distance during ICME',np.round(np.min(psp.r[startind1:endind1]),4), ic.icmecat_id[i1])
-
-
 
 i2=np.where(ic.icmecat_id=='ICME_PSP_MOESTL_20220602_01')[0][0]
 starttime2=ic.icme_start_time[i2]
@@ -397,10 +536,10 @@ al=0.5
 #################################
 ax1 = plt.subplot(321) 
 
-ax1.plot_date(sc1.time,sc1.bx,'-r',label='$B_{R}$',linewidth=lw)
-ax1.plot_date(sc1.time,sc1.by,'-g',label='$B_{T}$',linewidth=lw)
-ax1.plot_date(sc1.time,sc1.bz,'-b',label='$B_{N}$',linewidth=lw)
-ax1.plot_date(sc1.time,sc1.bt,'-k',label='$|B|$',lw=lw)
+ax1.plot(sc1.time,sc1.bx,'-r',label='$B_{R}$',linewidth=lw)
+ax1.plot(sc1.time,sc1.by,'-g',label='$B_{T}$',linewidth=lw)
+ax1.plot(sc1.time,sc1.bz,'-b',label='$B_{N}$',linewidth=lw)
+ax1.plot(sc1.time,sc1.bt,'-k',label='$|B|$',lw=lw)
 ax1.set_ylabel('B [nT] RTN')
 ax1.xaxis.set_major_formatter( matplotlib.dates.DateFormatter('%b-%d %Hh') )
 ax1.annotate('PSP 2018 Oct 30',xy=(0.5,0.88),xycoords='axes fraction',fontsize=11,ha='center',bbox=dict(boxstyle='round', facecolor='white'))
@@ -418,10 +557,10 @@ ax1.legend(loc=3,ncol=4,fontsize=8)
 
 #################################
 ax2 = plt.subplot(326) 
-ax2.plot_date(sc2.time,sc2.bx,'-r',label='Bx',linewidth=lw)
-ax2.plot_date(sc2.time,sc2.by,'-g',label='By',linewidth=lw)
-ax2.plot_date(sc2.time,sc2.bz,'-b',label='Bz',linewidth=lw)
-ax2.plot_date(sc2.time,sc2.bt,'-k',label='Btotal',lw=lw)
+ax2.plot(sc2.time,sc2.bx,'-r',label='Bx',linewidth=lw)
+ax2.plot(sc2.time,sc2.by,'-g',label='By',linewidth=lw)
+ax2.plot(sc2.time,sc2.bz,'-b',label='Bz',linewidth=lw)
+ax2.plot(sc2.time,sc2.bt,'-k',label='Btotal',lw=lw)
 ax2.set_ylabel('B [nT] RTN')
 ax2.xaxis.set_major_formatter( matplotlib.dates.DateFormatter('%b-%d %Hh') )
 ax2.annotate('PSP 2022 Jun 2',xy=(0.85,0.88),xycoords='axes fraction',fontsize=11,ha='center',bbox=dict(boxstyle='round', facecolor='white'))
@@ -437,10 +576,10 @@ ax2.tick_params(which="both", bottom=True)
 #################################
 ax3 = plt.subplot(324) 
 
-ax3.plot_date(sc3.time,sc3.bx,'-r',label='$B_{R}$',linewidth=lw)
-ax3.plot_date(sc3.time,sc3.by,'-g',label='$B_{T}$',linewidth=lw)
-ax3.plot_date(sc3.time,sc3.bz,'-b',label='$B_{N}$',linewidth=lw)
-ax3.plot_date(sc3.time,sc3.bt,'-k',label='$|B|$',lw=lw)
+ax3.plot(sc3.time,sc3.bx,'-r',label='$B_{R}$',linewidth=lw)
+ax3.plot(sc3.time,sc3.by,'-g',label='$B_{T}$',linewidth=lw)
+ax3.plot(sc3.time,sc3.bz,'-b',label='$B_{N}$',linewidth=lw)
+ax3.plot(sc3.time,sc3.bt,'-k',label='$|B|$',lw=lw)
 
 ax3.set_ylabel('B [nT] RTN')
 ax3.xaxis.set_major_formatter( matplotlib.dates.DateFormatter('%b-%d %Hh') )
@@ -456,10 +595,10 @@ ax3.tick_params(which="both", bottom=True)
 
 #################################
 ax4 = plt.subplot(322) 
-ax4.plot_date(sc4.time,sc4.bx,'-r',label='Bx',linewidth=lw)
-ax4.plot_date(sc4.time,sc4.by,'-g',label='By',linewidth=lw)
-ax4.plot_date(sc4.time,sc4.bz,'-b',label='Bz',linewidth=lw)
-ax4.plot_date(sc4.time,sc4.bt,'-k',label='Btotal',lw=lw)
+ax4.plot(sc4.time,sc4.bx,'-r',label='Bx',linewidth=lw)
+ax4.plot(sc4.time,sc4.by,'-g',label='By',linewidth=lw)
+ax4.plot(sc4.time,sc4.bz,'-b',label='Bz',linewidth=lw)
+ax4.plot(sc4.time,sc4.bt,'-k',label='Btotal',lw=lw)
 ax4.set_ylabel('B [nT] RTN')
 ax4.xaxis.set_major_formatter( matplotlib.dates.DateFormatter('%b-%d %Hh') )
 ax4.xaxis.set_major_locator(mdates.HourLocator(interval=6))
@@ -477,10 +616,10 @@ ax4.set_xlim(datetime.datetime(2021,4,30,1),datetime.datetime(2021,5,1,1))
 
 #################################
 ax5 = plt.subplot(325) 
-ax5.plot_date(sc5.time,sc5.bx,'-r',label='Bx',linewidth=lw)
-ax5.plot_date(sc5.time,sc5.by,'-g',label='By',linewidth=lw)
-ax5.plot_date(sc5.time,sc5.bz,'-b',label='Bz',linewidth=lw)
-ax5.plot_date(sc5.time,sc5.bt,'-k',label='Btotal',lw=lw)
+ax5.plot(sc5.time,sc5.bx,'-r',label='Bx',linewidth=lw)
+ax5.plot(sc5.time,sc5.by,'-g',label='By',linewidth=lw)
+ax5.plot(sc5.time,sc5.bz,'-b',label='Bz',linewidth=lw)
+ax5.plot(sc5.time,sc5.bt,'-k',label='Btotal',lw=lw)
 ax5.set_ylabel('B [nT] RTN')
 ax5.xaxis.set_major_formatter( matplotlib.dates.DateFormatter('%b-%d %Hh') )
 ax5.xaxis.set_major_locator(mdates.HourLocator(interval=4))
@@ -498,12 +637,12 @@ ax5.set_xlim(datetime.datetime(2023,3,13,3),datetime.datetime(2023,3,13,22))
 
 #################################
 ax6 = plt.subplot(323) 
-ax6.plot_date(sc6.time,sc6.bx,'-r',label='Bx',linewidth=lw)
-ax6.plot_date(sc6.time,sc6.by,'-g',label='By',linewidth=lw)
-ax6.plot_date(sc6.time,sc6.bz,'-b',label='Bz',linewidth=lw)
-ax6.plot_date(sc6.time,sc6.bt,'-k',label='Btotal',lw=lw)
+ax6.plot(sc6.time,sc6.bx,'-r',label='Bx',linewidth=lw)
+ax6.plot(sc6.time,sc6.by,'-g',label='By',linewidth=lw)
+ax6.plot(sc6.time,sc6.bz,'-b',label='Bz',linewidth=lw)
+ax6.plot(sc6.time,sc6.bt,'-k',label='Btotal',lw=lw)
 ax6.set_ylabel('B [nT] RTN')
-ax6.xaxis.set_major_formatter( matplotlib.dates.DateFormatter('%b-%d %Hh') )
+ax6.xaxis.set_major_formatter( matplotlib.dates.DateFormatter('%b-%d %H:00') )
 ax6.xaxis.set_major_locator(mdates.HourLocator(interval=6))
 
 ax6.xaxis.set_minor_locator(mdates.HourLocator(interval=1))
@@ -544,7 +683,7 @@ print('saved as ',plotfile)
 
 # ### B(r) curve fits in magnetic obstacle
 
-# In[11]:
+# In[40]:
 
 
 print('B(r) for MO_Bmean')
@@ -756,7 +895,7 @@ print()
 
 # ### Figure (4) B(r) power laws
 
-# In[12]:
+# In[41]:
 
 
 sns.set_context("talk")     
@@ -816,7 +955,7 @@ plt.savefig('results/fig4_br_mo.pdf', dpi=150,bbox_inches='tight')
 
 # ### Figure (5) connecting to solar observations
 
-# In[13]:
+# In[42]:
 
 
 sns.set_context("talk")     
@@ -1060,7 +1199,7 @@ plt.savefig('results/fig5_br_mo_zoom.pdf', dpi=150,bbox_inches='tight')
 
 # #### same with zoom in on close-in solar distances, for trying out power laws
 
-# In[14]:
+# In[43]:
 
 
 sns.set_context("talk")     
@@ -1263,7 +1402,7 @@ plt.savefig('results/fig5_br_mo_zoom_close.png', dpi=150,bbox_inches='tight')
 # ## solar cycle dependence
 # 
 
-# In[18]:
+# In[44]:
 
 
 #####TBD 
@@ -1274,7 +1413,7 @@ plt.savefig('results/fig5_br_mo_zoom_close.png', dpi=150,bbox_inches='tight')
 
 # #### B(r) curve fits in full ICME
 
-# In[19]:
+# In[45]:
 
 
 print('B(r) for ICME Bmean')
@@ -1315,7 +1454,7 @@ ax.set_xlim(0,3)
 ax.plot(fitx,powerlaw(fitx,param3[0],param3[1]),'-b')
 
 
-        
+
 
 print()
 print()
@@ -1366,7 +1505,7 @@ ax.plot(fitx,powerlaw(fitx,param4[0],param4[1]),'-b')
 # 
 # 
 
-# In[20]:
+# In[46]:
 
 
 print('D(r)')
@@ -1460,7 +1599,7 @@ ax.plot(fitx,powerlaw(fitx,param[0]+3*perr[0],fit_lm[0][1])+3*perr[0],'--b',alph
 
 # ### some general statistics
 
-# In[21]:
+# In[47]:
 
 
 ic.keys()
@@ -1485,10 +1624,16 @@ print(au/800/60/100)
 print(au/2000/60/100)
 
 
-# In[22]:
+# In[48]:
 
 
 ic.keys()
+
+
+# In[ ]:
+
+
+
 
 
 # In[ ]:

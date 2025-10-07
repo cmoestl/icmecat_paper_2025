@@ -1,10 +1,10 @@
-# ICMECAT paper 2025
+# ICMECAT paper 2026
 
-Code for producing the results and figures for the Möstl et al. 2025 ICMECAT paper.
+Code for producing the results and figures for the Möstl et al. 2026 ICMECAT paper.
 
 Everything is produced with the notebook moestl_icmecat_results.ipynb, see instructions on top of this file.
 
-Environment is helio5, see /envs.
+Environment is dro, see /envs.
 
 ## Installation
 
@@ -23,10 +23,10 @@ on MacOS:
 
 go to a directory of your choice
 
-    git clone https://github.com/cmoestl/icmecat_paper_2024
+    git clone https://github.com/cmoestl/icmecat_paper
 
-Create a conda environment using the "envs/env_helio5.yml", and activate the environment:
+Create a conda environment using the "envs/env_dro.yml", and activate the environment:
 
-    conda env create -f env_helio5.yml
+    conda env create -f env_dro.yml
 
-    conda activate helio5
+    conda activate dro
