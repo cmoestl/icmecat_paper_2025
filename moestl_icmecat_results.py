@@ -33,7 +33,7 @@
 # 
 # 
 
-# In[49]:
+# In[1]:
 
 
 import pickle 
@@ -77,7 +77,7 @@ print(os.system('pwd'))
 
 # ## load data
 
-# In[50]:
+# In[2]:
 
 
 #load icmecat as pandas dataframe
@@ -122,7 +122,7 @@ print('positions file loaded')
 
 # ### Basic ICMECAT statistics
 
-# In[66]:
+# In[3]:
 
 
 print('Number of events in ICMECAT', len(ic))
@@ -165,13 +165,25 @@ iuly=np.where(ic.sc_insitu=='ULYSSES')[0]
 print('closest events of PSP and SolO to sun')
 print()
 print('PSP')
-print(np.sort(ic.mo_sc_heliodistance[ipsp][0:15]))
-print(np.argsort(ic.mo_sc_heliodistance[ipsp]))
+ids=ic.sort_values('mo_sc_heliodistance')['icmecat_id']
+print(ids)
+ids_i=ids.index[0:10]
+print(ids_i)
 
-#sorted indices
-sortclose=np.argsort(ic.mo_sc_heliodistance[ipsp])
-print(ic.icmecat_id[sortclose])
-print()
+#names = df.sort_values('age')['name']
+
+
+#print(np.argsort(ic.mo_sc_heliodistance[ipsp]))
+
+
+# In[4]:
+
+
+#sorted indices for psp
+sortpsp=np.argsort(ic.mo_sc_heliodistance[ipsp])
+print(sortpsp[0:10])
+#print(ic.icmecat_id[ipsp][sortpsp])
+#print()
 
 print('SolO')
 print(np.sort(ic.mo_sc_heliodistance[isol])[0:15])
@@ -179,7 +191,7 @@ print(np.sort(ic.mo_sc_heliodistance[isol])[0:15])
 
 # ### Figure (1) for ICMECAT times and distance
 
-# In[37]:
+# In[5]:
 
 
 sns.set_context("paper")     
@@ -337,7 +349,7 @@ plt.savefig('results/fig1_icmecat_obs.pdf', dpi=150,bbox_inches='tight')
 
 # ### Figure (2) Solar Orbiter example event April 2023
 
-# In[38]:
+# In[6]:
 
 
 sns.set_style('whitegrid')
@@ -457,7 +469,7 @@ print('saved as ',plotfile)
 
 # ### Figure (3) PSP magnetic fields close-to-Sun observations
 
-# In[39]:
+# In[7]:
 
 
 sns.set_style('whitegrid')
@@ -683,7 +695,7 @@ print('saved as ',plotfile)
 
 # ### B(r) curve fits in magnetic obstacle
 
-# In[40]:
+# In[8]:
 
 
 print('B(r) for MO_Bmean')
@@ -895,7 +907,7 @@ print()
 
 # ### Figure (4) B(r) power laws
 
-# In[41]:
+# In[9]:
 
 
 sns.set_context("talk")     
@@ -955,7 +967,7 @@ plt.savefig('results/fig4_br_mo.pdf', dpi=150,bbox_inches='tight')
 
 # ### Figure (5) connecting to solar observations
 
-# In[42]:
+# In[10]:
 
 
 sns.set_context("talk")     
@@ -1199,7 +1211,7 @@ plt.savefig('results/fig5_br_mo_zoom.pdf', dpi=150,bbox_inches='tight')
 
 # #### same with zoom in on close-in solar distances, for trying out power laws
 
-# In[43]:
+# In[11]:
 
 
 sns.set_context("talk")     
@@ -1402,7 +1414,7 @@ plt.savefig('results/fig5_br_mo_zoom_close.png', dpi=150,bbox_inches='tight')
 # ## solar cycle dependence
 # 
 
-# In[44]:
+# In[12]:
 
 
 #####TBD 
@@ -1413,7 +1425,7 @@ plt.savefig('results/fig5_br_mo_zoom_close.png', dpi=150,bbox_inches='tight')
 
 # #### B(r) curve fits in full ICME
 
-# In[45]:
+# In[13]:
 
 
 print('B(r) for ICME Bmean')
@@ -1505,7 +1517,7 @@ ax.plot(fitx,powerlaw(fitx,param4[0],param4[1]),'-b')
 # 
 # 
 
-# In[46]:
+# In[14]:
 
 
 print('D(r)')
@@ -1599,7 +1611,7 @@ ax.plot(fitx,powerlaw(fitx,param[0]+3*perr[0],fit_lm[0][1])+3*perr[0],'--b',alph
 
 # ### some general statistics
 
-# In[47]:
+# In[15]:
 
 
 ic.keys()
@@ -1624,10 +1636,54 @@ print(au/800/60/100)
 print(au/2000/60/100)
 
 
-# In[48]:
+# In[16]:
 
 
 ic.keys()
+
+
+# In[ ]:
+
+
+
+
+
+# In[ ]:
+
+
+
+
+
+# ### ICMECAT playground
+
+# In[30]:
+
+
+plt.plot(ic.sheath_density_mean[iwin],ic.mo_bmean[iwin],'ko',ms=5)
+
+
+# In[ ]:
+
+
+
+
+
+# In[ ]:
+
+
+
+
+
+# In[ ]:
+
+
+
+
+
+# In[ ]:
+
+
+
 
 
 # In[ ]:
