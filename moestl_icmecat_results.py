@@ -16,12 +16,14 @@
 # ### To do 
 # 
 # - ICMECAT publish, check for errors, include 2025 Sep 1 at L1 
-# - power laws for each B component
+# - maybe look at power laws for each B component
 # - write up paper
 # 
 # 
 # ---
 # ### papers
+# 
+# - Salman PSP events https://iopscience.iop.org/article/10.3847/1538-4357/ad320c
 # 
 # - decay index profiles for ARs, but only in AR, too close
 # https://iopscience.iop.org/article/10.3847/1538-4357/ac5b06
@@ -33,7 +35,7 @@
 # 
 # 
 
-# In[1]:
+# In[161]:
 
 
 import pickle 
@@ -77,7 +79,7 @@ print(os.system('pwd'))
 
 # ## load data
 
-# In[2]:
+# In[162]:
 
 
 #load icmecat as pandas dataframe
@@ -122,7 +124,7 @@ print('positions file loaded')
 
 # ### Basic ICMECAT statistics
 
-# In[3]:
+# In[163]:
 
 
 print('Number of events in ICMECAT', len(ic))
@@ -162,13 +164,17 @@ isol=np.where(ic.sc_insitu=='SolarOrbiter')[0]
 ibep=np.where(ic.sc_insitu=='BepiColombo')[0]
 iuly=np.where(ic.sc_insitu=='ULYSSES')[0]
 
-print('closest events of PSP and SolO to sun')
+print('closest events of PSP to sun')
 print()
 print('PSP')
-ids=ic.sort_values('mo_sc_heliodistance')['icmecat_id']
-print(ids)
-ids_i=ids.index[0:10]
-print(ids_i)
+psp_ids=ic.sort_values('mo_sc_heliodistance')['icmecat_id']
+psp_dist=ic.sort_values('mo_sc_heliodistance')['mo_sc_heliodistance']
+print(psp_ids[0:15])
+print(psp_dist[0:15])
+
+
+#ids_i=ids.index[0:10]
+#print(ids_i)
 
 #names = df.sort_values('age')['name']
 
@@ -176,7 +182,7 @@ print(ids_i)
 #print(np.argsort(ic.mo_sc_heliodistance[ipsp]))
 
 
-# In[4]:
+# In[164]:
 
 
 #sorted indices for psp
@@ -191,7 +197,7 @@ print(np.sort(ic.mo_sc_heliodistance[isol])[0:15])
 
 # ### Figure (1) for ICMECAT times and distance
 
-# In[5]:
+# In[165]:
 
 
 sns.set_context("paper")     
@@ -349,7 +355,7 @@ plt.savefig('results/fig1_icmecat_obs.pdf', dpi=150,bbox_inches='tight')
 
 # ### Figure (2) Solar Orbiter example event April 2023
 
-# In[6]:
+# In[166]:
 
 
 sns.set_style('whitegrid')
@@ -438,7 +444,7 @@ ax4.plot(sc.time,sc.tp/1e6,'-k',label='Tp',linewidth=lw)
 plt.ylabel('T [MK]')
 ax4.set_xlim(start,end)
 ax4.set_yticks(np.arange(0,1,0.1))
-ax4.xaxis.set_major_formatter( matplotlib.dates.DateFormatter('%b-%d %Hh') )
+ax4.xaxis.set_major_formatter( matplotlib.dates.DateFormatter('%b-%d %H:00') )
 plt.ylim((0, 0.8))
 
 #plot vertical lines
@@ -469,7 +475,7 @@ print('saved as ',plotfile)
 
 # ### Figure (3) PSP magnetic fields close-to-Sun observations
 
-# In[7]:
+# In[167]:
 
 
 sns.set_style('whitegrid')
@@ -477,8 +483,17 @@ sns.set_context('paper')
 
 fig=plt.figure(figsize=(12,10), dpi=150)
 
+#these are the 6 closest PSP events from above
+#462     ICME_PSP_MOESTL_20220905_01
+#494     ICME_PSP_MOESTL_20220602_01
+#624     ICME_PSP_MOESTL_20210430_01
+#65      ICME_PSP_MOESTL_20241222_01
+#103     ICME_PSP_MOESTL_20241004_01
+#407     ICME_PSP_MOESTL_20230313_01
+
+
 #extract PSP event data
-i1=np.where(ic.icmecat_id=='ICME_PSP_MOESTL_20181030_01')[0][0]
+i1=np.where(ic.icmecat_id=='ICME_PSP_MOESTL_20220905_01')[0][0]
 starttime1=ic.icme_start_time[i1]
 endtime1=ic.mo_end_time[i1]
 startind1=np.where(starttime1 > psp.time)[0][-1]
@@ -495,7 +510,7 @@ sc2=psp[startind2-1000:endind2+1000]
 print('Event 2 min distance during ICME',np.round(np.min(psp.r[startind2:endind2]),4), ic.icmecat_id[i2])
 
 
-i3=np.where(ic.icmecat_id=='ICME_PSP_MOESTL_20220905_01')[0][0]
+i3=np.where(ic.icmecat_id=='ICME_PSP_MOESTL_20210430_01')[0][0]
 starttime3=ic.icme_start_time[i3]
 endtime3=ic.mo_end_time[i3]
 startind3=np.where(starttime3 > psp.time)[0][-1]
@@ -504,7 +519,7 @@ sc3=psp[startind3-1500:endind3+1500]
 print('Event 3 min distance during ICME',np.round(np.min(psp.r[startind3:endind3]),4),ic.icmecat_id[i3])
 
 
-i4=np.where(ic.icmecat_id=='ICME_PSP_MOESTL_20210430_01')[0][0]
+i4=np.where(ic.icmecat_id=='ICME_PSP_MOESTL_20241222_01')[0][0]
 starttime4=ic.icme_start_time[i4]
 endtime4=ic.mo_end_time[i4]
 startind4=np.where(starttime4 > psp.time)[0][-1]
@@ -512,8 +527,7 @@ endind4=np.where(endtime4 > psp.time)[0][-1]
 sc4=psp[startind4-1500:endind4+1500]
 print('Event 4 min distance during ICME',np.round(np.min(psp.r[startind4:endind4]),4),ic.icmecat_id[i4])
 
-
-i5=np.where(ic.icmecat_id=='ICME_PSP_MOESTL_20230313_01')[0][0]
+i5=np.where(ic.icmecat_id=='ICME_PSP_MOESTL_20241004_01')[0][0]
 starttime5=ic.icme_start_time[i5]
 endtime5=ic.mo_end_time[i5]
 startind5=np.where(starttime5 > psp.time)[0][-1]
@@ -522,7 +536,7 @@ sc5=psp[startind5-1500:endind5+1500]
 print('Event 5 min distance during ICME',np.round(np.min(psp.r[startind5:endind5]),4),ic.icmecat_id[i5])
 
 #i6=np.where(ic.icmecat_id=='ICME_PSP_MOESTL_20220912_01')[0][0]
-i6=np.where(ic.icmecat_id=='ICME_PSP_MOESTL_20230922_01')[0][0]
+i6=np.where(ic.icmecat_id=='ICME_PSP_MOESTL_20230313_01')[0][0]
 starttime6=ic.icme_start_time[i6]
 endtime6=ic.mo_end_time[i6]
 startind6=np.where(starttime6 > psp.time)[0][-1]
@@ -533,42 +547,36 @@ min6=np.round(np.min(psp.r[startind6:endind6]),4)
 print('Event 6 min distance during ICME',min6,ic.icmecat_id[i6])
 print(ic.mo_sc_heliodistance[i6])
 
+
+
 def plot_boundaries(ax,index):
     #plot vertical lines
     ax.axvline(ic.icme_start_time[index],color='black',linewidth=lw,alpha=al)
     ax.axvline(ic.mo_start_time[index],color='black',linewidth=lw,alpha=al)
     ax.axvline(ic.mo_end_time[index],color='black',linewidth=lw,alpha=al)
 
-
-lw=1.1
-al=0.5
-
-
+lw=1.3
+al=0.7
 
 #################################
 ax1 = plt.subplot(321) 
-
 ax1.plot(sc1.time,sc1.bx,'-r',label='$B_{R}$',linewidth=lw)
 ax1.plot(sc1.time,sc1.by,'-g',label='$B_{T}$',linewidth=lw)
 ax1.plot(sc1.time,sc1.bz,'-b',label='$B_{N}$',linewidth=lw)
 ax1.plot(sc1.time,sc1.bt,'-k',label='$|B|$',lw=lw)
 ax1.set_ylabel('B [nT] RTN')
-ax1.xaxis.set_major_formatter( matplotlib.dates.DateFormatter('%b-%d %Hh') )
-ax1.annotate('PSP 2018 Oct 30',xy=(0.5,0.88),xycoords='axes fraction',fontsize=11,ha='center',bbox=dict(boxstyle='round', facecolor='white'))
-
+ax1.xaxis.set_major_formatter( matplotlib.dates.DateFormatter('%b-%d %H:00') )
+ax1.annotate('PSP 2022 Sep 5',xy=(0.85,0.88),xycoords='axes fraction',fontsize=11,ha='center',bbox=dict(boxstyle='round', facecolor='white'))
+ax1.annotate('0.0632 au',xy=(0.85,0.08),xycoords='axes fraction',fontsize=11,ha='center',bbox=dict(boxstyle='round', facecolor='white'))
 plot_boundaries(ax1,i1)
-
-ax1.set_xlim(datetime.datetime(2018,10,30,15),datetime.datetime(2018,10,31,15))
+ax1.set_xlim(datetime.datetime(2022,9,5,13),datetime.datetime(2022,9,6,10))
 ax1.xaxis.set_major_locator(mdates.HourLocator(interval=4))
 ax1.xaxis.set_minor_locator(mdates.HourLocator(interval=1))
 ax1.tick_params(which="both", bottom=True)
 
 
-ax1.legend(loc=3,ncol=4,fontsize=8)
-
-
 #################################
-ax2 = plt.subplot(326) 
+ax2 = plt.subplot(322) 
 ax2.plot(sc2.time,sc2.bx,'-r',label='Bx',linewidth=lw)
 ax2.plot(sc2.time,sc2.by,'-g',label='By',linewidth=lw)
 ax2.plot(sc2.time,sc2.bz,'-b',label='Bz',linewidth=lw)
@@ -576,17 +584,15 @@ ax2.plot(sc2.time,sc2.bt,'-k',label='Btotal',lw=lw)
 ax2.set_ylabel('B [nT] RTN')
 ax2.xaxis.set_major_formatter( matplotlib.dates.DateFormatter('%b-%d %Hh') )
 ax2.annotate('PSP 2022 Jun 2',xy=(0.85,0.88),xycoords='axes fraction',fontsize=11,ha='center',bbox=dict(boxstyle='round', facecolor='white'))
-
+ax2.annotate('0.0705 au',xy=(0.85,0.08),xycoords='axes fraction',fontsize=11,ha='center',bbox=dict(boxstyle='round', facecolor='white'))
 plot_boundaries(ax2,i2)
 ax2.set_xlim(datetime.datetime(2022,6,2,8),datetime.datetime(2022,6,2,18))
 ax2.xaxis.set_major_locator(mdates.HourLocator(interval=2))
 ax2.xaxis.set_minor_locator(mdates.HourLocator(interval=1))
 ax2.tick_params(which="both", bottom=True)
 
-
-
 #################################
-ax3 = plt.subplot(324) 
+ax3 = plt.subplot(323) 
 
 ax3.plot(sc3.time,sc3.bx,'-r',label='$B_{R}$',linewidth=lw)
 ax3.plot(sc3.time,sc3.by,'-g',label='$B_{T}$',linewidth=lw)
@@ -595,35 +601,34 @@ ax3.plot(sc3.time,sc3.bt,'-k',label='$|B|$',lw=lw)
 
 ax3.set_ylabel('B [nT] RTN')
 ax3.xaxis.set_major_formatter( matplotlib.dates.DateFormatter('%b-%d %Hh') )
-ax3.annotate('PSP 2022 Sep 5',xy=(0.85,0.88),xycoords='axes fraction',fontsize=11,ha='center',bbox=dict(boxstyle='round', facecolor='white'))
+ax3.annotate('PSP 2021 Apr 30',xy=(0.85,0.88),xycoords='axes fraction',fontsize=11,ha='center',bbox=dict(boxstyle='round', facecolor='white'))
+ax3.annotate('0.0892 au',xy=(0.85,0.08),xycoords='axes fraction',fontsize=11,ha='center',bbox=dict(boxstyle='round', facecolor='white'))
 
 plot_boundaries(ax3,i3)
-ax3.set_xlim(datetime.datetime(2022,9,5,13),datetime.datetime(2022,9,6,10))
+ax3.set_xlim(datetime.datetime(2021,4,30,1),datetime.datetime(2021,4,30,18))
 ax3.xaxis.set_major_locator(mdates.HourLocator(interval=4))
 ax3.xaxis.set_minor_locator(mdates.HourLocator(interval=1))
 ax3.tick_params(which="both", bottom=True)
 
 
-
 #################################
-ax4 = plt.subplot(322) 
+ax4 = plt.subplot(324) 
 ax4.plot(sc4.time,sc4.bx,'-r',label='Bx',linewidth=lw)
 ax4.plot(sc4.time,sc4.by,'-g',label='By',linewidth=lw)
 ax4.plot(sc4.time,sc4.bz,'-b',label='Bz',linewidth=lw)
 ax4.plot(sc4.time,sc4.bt,'-k',label='Btotal',lw=lw)
+
 ax4.set_ylabel('B [nT] RTN')
 ax4.xaxis.set_major_formatter( matplotlib.dates.DateFormatter('%b-%d %Hh') )
-ax4.xaxis.set_major_locator(mdates.HourLocator(interval=6))
-
-ax4.xaxis.set_minor_locator(mdates.HourLocator(interval=1))
-ax4.tick_params(which="both", bottom=True)
+ax4.annotate('PSP 2024 Dec 22',xy=(0.85,0.88),xycoords='axes fraction',fontsize=11,ha='center',bbox=dict(boxstyle='round', facecolor='white'))
+ax4.annotate('0.1354 au',xy=(0.85,0.08),xycoords='axes fraction',fontsize=11,ha='center',bbox=dict(boxstyle='round', facecolor='white'))
 
 plot_boundaries(ax4,i4)
-
-ax4.annotate('PSP 2021 Apr 30',xy=(0.85,0.88),xycoords='axes fraction',fontsize=11,ha='center',bbox=dict(boxstyle='round', facecolor='white'))
-ax4.set_xlim(datetime.datetime(2021,4,30,1),datetime.datetime(2021,5,1,1))
-
-
+ax4.set_xlim(datetime.datetime(2024,12,22,1),datetime.datetime(2024,12,23,1))
+ax4.tick_params(which="both", bottom=True)
+ax4.xaxis.set_major_locator(mdates.HourLocator(interval=6))
+ax4.xaxis.set_minor_locator(mdates.HourLocator(interval=1))
+ax4.tick_params(which="both", bottom=True)
 
 
 #################################
@@ -632,70 +637,73 @@ ax5.plot(sc5.time,sc5.bx,'-r',label='Bx',linewidth=lw)
 ax5.plot(sc5.time,sc5.by,'-g',label='By',linewidth=lw)
 ax5.plot(sc5.time,sc5.bz,'-b',label='Bz',linewidth=lw)
 ax5.plot(sc5.time,sc5.bt,'-k',label='Btotal',lw=lw)
+
 ax5.set_ylabel('B [nT] RTN')
 ax5.xaxis.set_major_formatter( matplotlib.dates.DateFormatter('%b-%d %Hh') )
-ax5.xaxis.set_major_locator(mdates.HourLocator(interval=4))
+ax5.annotate('PSP 2024 Oct 4',xy=(0.85,0.88),xycoords='axes fraction',fontsize=11,ha='center',bbox=dict(boxstyle='round', facecolor='white'))
+ax5.annotate('0.2056 au',xy=(0.85,0.08),xycoords='axes fraction',fontsize=11,ha='center',bbox=dict(boxstyle='round', facecolor='white'))
 
+plot_boundaries(ax5,i5)
+ax5.set_xlim(datetime.datetime(2024,10,4,1),datetime.datetime(2024,10,4,15))
+ax5.tick_params(which="both", bottom=True)
+ax5.xaxis.set_major_locator(mdates.HourLocator(interval=6))
 ax5.xaxis.set_minor_locator(mdates.HourLocator(interval=1))
 ax5.tick_params(which="both", bottom=True)
 
-plot_boundaries(ax5,i5)
-
-ax5.annotate('PSP 2023 Mar 13',xy=(0.85,0.88),xycoords='axes fraction',fontsize=11,ha='center',bbox=dict(boxstyle='round', facecolor='white'))
-ax5.set_xlim(datetime.datetime(2023,3,13,3),datetime.datetime(2023,3,13,22))
-
-
-
 
 #################################
-ax6 = plt.subplot(323) 
+ax6 = plt.subplot(326) 
 ax6.plot(sc6.time,sc6.bx,'-r',label='Bx',linewidth=lw)
 ax6.plot(sc6.time,sc6.by,'-g',label='By',linewidth=lw)
 ax6.plot(sc6.time,sc6.bz,'-b',label='Bz',linewidth=lw)
 ax6.plot(sc6.time,sc6.bt,'-k',label='Btotal',lw=lw)
-ax6.set_ylabel('B [nT] RTN')
-ax6.xaxis.set_major_formatter( matplotlib.dates.DateFormatter('%b-%d %H:00') )
-ax6.xaxis.set_major_locator(mdates.HourLocator(interval=6))
 
+ax6.set_ylabel('B [nT] RTN')
+ax6.xaxis.set_major_formatter( matplotlib.dates.DateFormatter('%b-%d %Hh') )
+ax6.annotate('PSP 2023 Mar 13',xy=(0.85,0.88),xycoords='axes fraction',fontsize=11,ha='center',bbox=dict(boxstyle='round', facecolor='white'))
+ax6.annotate('0.2187 au',xy=(0.85,0.08),xycoords='axes fraction',fontsize=11,ha='center',bbox=dict(boxstyle='round', facecolor='white'))
+
+plot_boundaries(ax6,i6)
+ax6.set_xlim(datetime.datetime(2023,3,13,5),datetime.datetime(2023,3,13,23))
+ax6.tick_params(which="both", bottom=True)
+ax6.xaxis.set_major_locator(mdates.HourLocator(interval=6))
 ax6.xaxis.set_minor_locator(mdates.HourLocator(interval=1))
 ax6.tick_params(which="both", bottom=True)
 
-
-plot_boundaries(ax6,i6)
-
-ax6.annotate('PSP 2023 Sep 22',xy=(0.85,0.88),xycoords='axes fraction',fontsize=11,ha='center',bbox=dict(boxstyle='round', facecolor='white'))
-#ax6.annotate('PSP 2023 Sep 22',xy=(0.85,0.88),xycoords='axes fraction',fontsize=11,ha='center',bbox=dict(boxstyle='round', facecolor='white'))
-#'+str(min6)
-
-ax6.set_xlim(datetime.datetime(2023,9,22,15),datetime.datetime(2023,9,23,3))
-
-
-
 ##################
-
 plt.tight_layout()
 
-
 plt.annotate('(a)',xy=(0.02,0.97),xycoords='figure fraction',fontsize=13,ha='center')
-plt.annotate('(b)',xy=(0.52,0.97),xycoords='figure fraction',fontsize=13,ha='center')
-plt.annotate('(c)',xy=(0.02,0.65),xycoords='figure fraction',fontsize=13,ha='center')
-plt.annotate('(d)',xy=(0.52,0.65),xycoords='figure fraction',fontsize=13,ha='center')
-plt.annotate('(e)',xy=(0.02,0.33),xycoords='figure fraction',fontsize=13,ha='center')
-plt.annotate('(f)',xy=(0.52,0.33),xycoords='figure fraction',fontsize=13,ha='center')
+plt.annotate('(b)',xy=(0.50,0.97),xycoords='figure fraction',fontsize=13,ha='center')
+plt.annotate('(c)',xy=(0.02,0.64),xycoords='figure fraction',fontsize=13,ha='center')
+plt.annotate('(d)',xy=(0.50,0.64),xycoords='figure fraction',fontsize=13,ha='center')
+plt.annotate('(e)',xy=(0.02,0.32),xycoords='figure fraction',fontsize=13,ha='center')
+plt.annotate('(f)',xy=(0.50,0.32),xycoords='figure fraction',fontsize=13,ha='center')
 
 
 plotfile='results/fig3_psp_close.png'
 plt.savefig(plotfile)
-
 plotfile='results/fig3_psp_close.pdf'
 plt.savefig(plotfile)
 
 print('saved as ',plotfile)
 
 
-# ### B(r) curve fits in magnetic obstacle
+# ## B(r) curve fits in magnetic obstacle
 
-# In[8]:
+# #### Bmean in MO
+# 
+# results: for distance \
+# 
+# < 1.1 a and b are [10.742 -1.568] \
+# < 1.0 a and b are [10.71  -1.569]\
+# < 0.8 a and b are [10.67  -1.571] \
+# < 0.5 a and b are [10.24  -1.588] \
+# with all and Ulysses [10.74  -1.568] \
+# without Ulysses completely similar [10.741 -1.568]
+# 
+
+# In[191]:
 
 
 print('B(r) for MO_Bmean')
@@ -705,97 +713,101 @@ b=ic.mo_bmean
 
 #remove events where one or both are nan
 rem=np.where(np.logical_or(np.isnan(r), np.isnan(b)))[0]
-
 r=r.drop(rem)
 b=b.drop(rem)
 
+#remove ulysses because high latitude
+#r=r.drop(iuly)
+#b=b.drop(iuly)
 
-#remove ulysses
-r=r.drop(iuly)
-b=b.drop(iuly)
+#select distance range
+ind1au=np.where(np.logical_and(ic.mo_sc_heliodistance < 6.0,ic.mo_sc_heliodistance > 0.0))[0]
 
+rmean=r[ind1au]
+bmean=b[ind1au]
+#rmean=r
+#bmean=b
 
+print('fit is done for ',len(rmean),' events')
 
+#plt.plot(rmean[ind1au],bmean[ind1au],'ok',ms=1)
 
+#solar radius in au
 rs=1*const.R_sun/const.au
 print('start fit at 1 solar radii, in AU: ',np.round(rs,4))
-print()
-fitx=np.linspace(rs,6,num=10000)
-
+fitx=np.linspace(1*rs,5.5,num=10000)
 
 #curve fit, no initial guess, all methods arrive at similar values
-
 #Algorithm to perform minimization.
 #‘trf’ : Trust Region Reflective algorithm, particularly suitable for large sparse problems with bounds. Generally robust method.
 #‘dogbox’ : dogleg algorithm with rectangular trust regions, typical use case is small problems with bounds. Not recommended for problems with rank-deficient Jacobian.
 #‘lm’ : Levenberg-Marquardt algorithm as implemented in MINPACK. Doesn’t handle bounds and sparse Jacobians. Usually the most efficient method for small unconstrained problems.
-fit_lm=scipy.optimize.curve_fit(powerlaw, r,b,method='lm',full_output=True)
-fit_trf=scipy.optimize.curve_fit(powerlaw, r,b,method='trf')
-fit_dogbox=scipy.optimize.curve_fit(powerlaw, r,b,method='dogbox')
+fit_lm=scipy.optimize.curve_fit(powerlaw, rmean,bmean,method='lm',full_output=True)
+fit_trf=scipy.optimize.curve_fit(powerlaw, rmean,bmean,method='trf')
+fit_dogbox=scipy.optimize.curve_fit(powerlaw, rmean,bmean,method='dogbox')
 
-print('LM; TRF; dogbox methods')
-print(fit_trf[0])
-print(fit_lm[0])
-print(fit_dogbox[0])
+print('LM, TRF dogbox methods power law parameters')
+print(np.round(fit_trf[0],3))
+print(np.round(fit_lm[0],3))
+print(np.round(fit_dogbox[0],3))
 
-
-#https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.curve_fit.html
+# https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.curve_fit.html
 # discussion of variance for MO Bmean
 param=fit_lm[0]
 pcov=fit_lm[1]
 perr = np.sqrt(np.diag(pcov))
-print('LM results in detail')
-print('Parameters a and b, y = a x^b:',np.round(param,2))
-print('3 standard deviation on a and b', 3*np.round(perr,2))
+print('LM results in detail:')
+print('Parameters a and b, y = a x^b:',np.round(param,3))
+print('3 standard deviation on a and b', 3*np.round(perr,3))
 print()
 print()
 
-
-#---------------------------------------------------------------
-
-
+#------plot 
 fig=plt.figure(3,figsize=(12,10),dpi=100)
 ax=plt.subplot(211)
-ax.plot(r,b,'ok', markersize=1)
+ax.plot(rmean,bmean,'ok', markersize=1)
 ax.set_yscale('log')
 ax.set_xlim(0,6)
 ax.plot(fitx,powerlaw(fitx,param[0],param[1]),'-b')
 
-#LM results
-print()
-print()
+
+# #### Bmax in MO
+
+# In[192]:
 
 
-
-print('-----------------------------')
-
-###########################################################################
-print('B(r) for MO_Bmax')
+print('B(r) for MO_Bax')
 
 r=ic.mo_sc_heliodistance
 b=ic.mo_bmax
 
 #remove events where one or both are nan
 rem=np.where(np.logical_or(np.isnan(r), np.isnan(b)))[0]
-
 r=r.drop(rem)
 b=b.drop(rem)
 
+#remove ulysses because high latitude
+#r=r.drop(iuly)
+#b=b.drop(iuly)
 
-#remove ulysses
-r=r.drop(iuly)
-b=b.drop(iuly)
+#select distance range
+ind1au=np.where(np.logical_and(ic.mo_sc_heliodistance < 6.0,ic.mo_sc_heliodistance > 0.0))[0]
 
+rmax=r[ind1au]
+bmax=b[ind1au]
+#rmean=r
+#bmean=b
 
-fit2_lm=scipy.optimize.curve_fit(powerlaw, r,b,method='lm',full_output=True)
-fit2_trf=scipy.optimize.curve_fit(powerlaw, r,b,method='trf')
-fit2_dogbox=scipy.optimize.curve_fit(powerlaw, r,b,method='dogbox')
+print('fit is done for ',len(rmean),' events')
 
-
-print('LM; TRF; dogbox methods')
-print(fit2_trf[0])
-print(fit2_lm[0])
-print(fit2_dogbox[0])
+#plt.plot(rmean[ind1au],bmean[ind1au],'ok',ms=1)
+fit2_lm=scipy.optimize.curve_fit(powerlaw, rmax,bmax,method='lm',full_output=True)
+fit2_trf=scipy.optimize.curve_fit(powerlaw, rmax,bmax,method='trf')
+fit2_dogbox=scipy.optimize.curve_fit(powerlaw, rmax,bmax,method='dogbox')
+print('LM, TRF dogbox methods power law parameters')
+print(np.round(fit2_trf[0],4))
+print(np.round(fit2_lm[0],4))
+print(np.round(fit2_dogbox[0],4))
 
 #https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.curve_fit.html
 # discussion of variance for MO Bmax
@@ -803,33 +815,30 @@ param2=fit2_lm[0]
 pcov2=fit2_lm[1]
 perr2 = np.sqrt(np.diag(pcov2))
 print('LM results in detail')
-print('Parameters a and b, y = a x^b:',np.round(param2,2))
-print('3 standard deviation on a and b', 3*np.round(perr2,2))
+print('Parameters a and b, y = a x^b:',np.round(param2,4))
+print('3 standard deviation on a and b', 3*np.round(perr2,4))
 print()
 print()
 
 
-#---------------------------------------------------------------
-
-#ax2=plt.subplot(212)
-#ax2.plot(r,b,'ok', markersize=1)
-#ax2.set_yscale('log')
-#ax2.set_xlim(0,3)
-
-ax.plot(fitx,powerlaw(fitx,param2[0],param2[1]),'-r')
 
 
-#LM results
-print()
-print()
+#------plot 
+fig=plt.figure(3,figsize=(12,10),dpi=100)
+ax=plt.subplot(211)
+ax.plot(rmean,bmean,'ok', markersize=0.5)
+ax.plot(rmean,bmean,'or', markersize=0.5)
+ax.set_yscale('log')
+ax.set_xlim(0,6)
+ax.plot(fitx,powerlaw(fitx,param[0],param[1]),'-b',label='MO Bmean')
+ax.plot(fitx,powerlaw(fitx,param2[0],param2[1]),'-r',label='MO Bmax')
+ax.legend()
 
 
-#all results , e.g. nfev indicates the number of function calls
-#print(fit2_lm)
+# ### Component fits, need to check
 
+# In[233]:
 
-
-print('---------------------')
 
 print('component fits, check what happens < 0')
 
@@ -907,19 +916,19 @@ print()
 
 # ### Figure (4) B(r) power laws
 
-# In[9]:
+# In[234]:
 
 
 sns.set_context("talk")     
 sns.set_style('whitegrid')
 
 ###############################################################################
-fig=plt.figure(3,figsize=(14,7),dpi=200)
+fig=plt.figure(3,figsize=(14,7),dpi=100)
 
 ##############################################################################
 ax=plt.subplot(111)
 #plt.title('ICMECAT mean magnetic field in the magnetic obstacle')
-ax.set_xlabel('Heliocentric distance $r$ [AU]')
+ax.set_xlabel('Heliocentric distance $R$ [au]')
 ax.set_ylabel('Magnetic field magnitude $B$ [nT]')
 
 ax.plot(ic.mo_sc_heliodistance[ipsp],ic.mo_bmean[ipsp],'o',c='black', alpha=al,ms=ms, label='Parker Solar Probe',zorder=3)
@@ -930,7 +939,7 @@ ax.plot(ic.mo_sc_heliodistance[ista],ic.mo_bmean[ista],'o',c='red', alpha=al,ms=
 
 ax.plot(ic.mo_sc_heliodistance[imes],ic.mo_bmean[imes],'o',c='coral', alpha=al,ms=ms,label='MESSENGER')
 ax.plot(ic.mo_sc_heliodistance[ivex],ic.mo_bmean[ivex],'o',c='orange', alpha=al,ms=ms,label='Venus Express')
-#ax.plot(ic.mo_sc_heliodistance[iuly],ic.mo_bmean[iuly],'o',c='chocolate', alpha=al,ms=ms, label='Ulysses')
+ax.plot(ic.mo_sc_heliodistance[iuly],ic.mo_bmean[iuly],'o',c='chocolate', alpha=al,ms=ms, label='Ulysses')
 ax.plot(ic.mo_sc_heliodistance[imav],ic.mo_bmean[imav],'o',c='orangered', alpha=al,ms=ms, label='MAVEN')
 ax.plot(ic.mo_sc_heliodistance[istb],ic.mo_bmean[istb],'o',c='royalblue', alpha=al,ms=ms, label='STEREO-B')
 ax.plot(ic.mo_sc_heliodistance[ijun],ic.mo_bmean[ijun],'o', c='black',markerfacecolor='yellow', alpha=al,ms=ms, label='Juno')
@@ -944,41 +953,40 @@ ax.set_ylim([1e-1,1*1e4])
 ax.set_yscale('log')
 
 ########### plot fits
-ax.plot(fitx,powerlaw(fitx,param[0],param[1]),'-k', zorder=5, label='<$B_{MO}$> fit')
+ax.plot(fitx,powerlaw(fitx,param[0],param[1]),'-k', zorder=5, label='mean($B_{MO}$) fit')
 #with errors 2 std
-ax.plot(fitx,powerlaw(fitx,param[0]-2*perr[0],fit_lm[0][1])-2*perr[0],'--k',alpha=0.5, zorder=5)
-ax.plot(fitx,powerlaw(fitx,param[0]+2*perr[0],fit_lm[0][1])+2*perr[0],'--k',alpha=0.5, zorder=5)
+ax.plot(fitx,powerlaw(fitx,param[0]-2*perr[0],fit_lm[0][1])-2*perr[0],'-k',alpha=0.5, zorder=5)
+ax.plot(fitx,powerlaw(fitx,param[0]+2*perr[0],fit_lm[0][1])+2*perr[0],'-k',alpha=0.5, zorder=5)
 
-ax.plot(fitx,powerlaw(fitx,param2[0],param2[1]),'-r', zorder=5, label='max($B_{MO}$) fit')
+ax.plot(fitx,powerlaw(fitx,param2[0],param2[1]),'-.r', zorder=5, label='max($B_{MO}$) fit')
 
-formulastring='$<B_{MO}>(r)='+str(np.round(param[0],2))+'  r^{'+str(np.round(param[1],2))+'}$'
+formulastring=r'$\mathrm{mean}(B_{MO}(R)) = '+str(np.round(param[0],2))+r' \times R^{'+str(np.round(param[1],2))+'}$'
 ax.annotate(formulastring,xy=(0.403,0.73),xycoords='axes fraction',fontsize=15,ha='center',bbox=dict(boxstyle='round', facecolor='white'))
 
-formulastring='$max(B_{MO})(r)='+str(np.round(param2[0],2))+' r^{'+str(np.round(param2[1],2))+'}$'
+formulastring=r'$\mathrm{max}(B_{MO}(R)) = '+str(np.round(param2[0],2))+r' \times R^{'+str(np.round(param2[1],2))+'}$'
 ax.annotate(formulastring,xy=(0.4,0.66),xycoords='axes fraction',fontsize=15,ha='center',bbox=dict(boxstyle='round', facecolor='white'))
 
-
-ax.legend(loc=1,fontsize=13)
+ax.legend(loc=1,fontsize=11)
 plt.tight_layout()
 
-plt.savefig('results/fig4_br_mo.png', dpi=150,bbox_inches='tight')
-plt.savefig('results/fig4_br_mo.pdf', dpi=150,bbox_inches='tight')
+plt.savefig('results/fig4_br_mo.png', dpi=300,bbox_inches='tight')
+plt.savefig('results/fig4_br_mo.pdf', dpi=300,bbox_inches='tight')
 
 
 # ### Figure (5) connecting to solar observations
 
-# In[10]:
+# In[245]:
 
 
 sns.set_context("talk")     
 sns.set_style('whitegrid')
 
 ###############################################################################
-fig=plt.figure(figsize=(14,7),dpi=200)
+fig=plt.figure(figsize=(14,7),dpi=100)
 
 ax=plt.subplot(111)
 #plt.title('ICME magnetic obstacle field compared to solar observations of active regions')
-ax.set_xlabel('Heliocentric distance $r$ [au]')
+ax.set_xlabel('Heliocentric distance $R$ [au]')
 ax.set_ylabel('$B$ [nT]')
 
 #plot psp data Btotal
@@ -988,7 +996,7 @@ ax.plot(solo.r,solo.bt,'-b',linewidth=0.2, label='Solar Orbiter |B|')
 
 ax.plot(ic.mo_sc_heliodistance[imes],ic.mo_bmean[imes],'o',c='coral', alpha=al,ms=ms,label='MESSENGER ICMEs')
 ax.plot(ic.mo_sc_heliodistance[ibep],ic.mo_bmean[ibep],'o',c='darkblue',markerfacecolor='lightgrey', alpha=al,ms=ms,label='BepiColombo ICMEs')
-ax.plot(ic.mo_sc_heliodistance[ipsp],ic.mo_bmean[ipsp],'o',c='black', alpha=al,ms=ms, label='Parker Solar Probe ICMEs')
+ax.plot(ic.mo_sc_heliodistance[ipsp],ic.mo_bmean[ipsp],'o',c='black', alpha=1.0,ms=ms, label='Parker Solar Probe ICMEs')
 ax.plot(ic.mo_sc_heliodistance[isol],ic.mo_bmean[isol],'o',c='black', markerfacecolor='white',alpha=al,ms=ms, label='Solar Orbiter ICMEs')
 
 #ax3.set_xscale('log')
@@ -1002,28 +1010,22 @@ ax.set_ylim([0.1,10**9])
 
 ax.grid(True, which='both', zorder=2)
 
-######################## Create a second x-axis with solar radii
-
+##### create a second x-axis with solar radii
 ax1 = ax.twiny()
-ax1.set_xlabel('$r$ [R$_{\odot}$]', color='black')
-
+ax1.set_xlabel('$R$ [R$_{\odot}$]', color='black')
 #plot something in the solar radii scale but do not show it
 ax1.plot(ic.mo_sc_heliodistance[ista]*scale, ic.mo_bmean[ista], '.',color=None)
 ax1_ticks=np.arange(0,ax_max_x*scale,5)
 ax1.set_xlim(0,ax_max_x*scale)
 ax1.set_xticks(ax1_ticks)
-
-
 #a 2nd axis grid is always in front of the data, for fix see bottom of https://github.com/matplotlib/matplotlib/issues/7984
 ax1.set_zorder(-1)
 ax.patch.set_visible(False)
 ax1.patch.set_visible(True)
 
-######################## plot fits
+######################## plot power law from fits, #param is the bmean fit
 
-#param2 is the bmax fit
-ax.plot(fitx,powerlaw(fitx,param2[0],param2[1]),'-k',label='max($B_{MO}$) fit, n= -1.53')
-print(param2)
+ax.plot(fitx,powerlaw(fitx,param[0],param[1]),'-k',label='mean($B_{MO}$) fit, n= -1.57')
 #with errors 3 std
 #ax3.plot(fitx,powerlaw(fitx,param[0]-3*perr[0],fit_lm[0][1])-3*perr[0],'--k',alpha=0.5)
 #ax3.plot(fitx,powerlaw(fitx,param[0]+3*perr[0],fit_lm[0][1])+3*perr[0],'--k',alpha=0.5)
@@ -1032,7 +1034,6 @@ print(param2)
 ########################## add solar data points
 
 gauss=1e5 #1 Gauss= 10^5 nT
-
 #sunspot field strength at 1 solar radii
 #https://link.springer.com/article/10.1007/s11207-006-0265-4
 #average 2000 Gauss
@@ -1045,11 +1046,8 @@ sunspot_b=2000*gauss              #general value for ARs fine?
 coronal_dist=1.3*const.R_sun/const.au  
 coronal_b=50*gauss             
 
-
 ax.plot(sunspot_dist,sunspot_b,marker='s', markerfacecolor='white',markersize='10')
 #ax.plot(coronal_dist,coronal_b,marker='s', markerfacecolor='white',markersize='10')
-
-
 
 #quiet sun 46 Gauss
 #https://iopscience.iop.org/article/10.3847/2041-8213/ac0af2#:~:text=On%20average%2C%20the%20quiet%2DSun,a%20strength%20of%2046%20G.
@@ -1057,7 +1055,6 @@ ax.plot(sunspot_dist,sunspot_b,marker='s', markerfacecolor='white',markersize='1
 quiet_dist1=1*rs   #1 Rs correct
 quiet_b1=46*gauss              
 ax.errorbar(quiet_dist1,quiet_b1,yerr=0,marker='s', markerfacecolor='white',markersize='10',capsize=5)
-
 
 #ax3.set_ylim([1,10**9])
 
@@ -1070,10 +1067,8 @@ ax.axvline(17*rs,linestyle='--', color='k', linewidth=0.5)
 psp_min=9.86*const.R_sun/const.au
 ax.axvline(psp_min,linestyle='-', color='b', linewidth=0.5)
 
-
 formulastring='$B_{MO}(r)='+str(np.round(param[0],2))+'r ^{'+str(np.round(param[1],2))+'}$'
 #ax3.annotate(formulastring,xy=(0.4,0.6),xycoords='axes fraction',fontsize=20,ha='center')
-
 
 #ax3.set_ylim([0,np.max(ic.mo_bmean)+50])
 #ax3.set_yticks(np.arange(0,1000,10))
@@ -1163,26 +1158,12 @@ b=bn[rem2]
 #---------------------------------------------------------------
 
 
-############## plot annotations
-
-annotfs=13
-
-ax.annotate('PSP minimum orbital distance 9.86 Rs',xy=(psp_min+0.001,5*1e5),xycoords='data',fontsize=annotfs,ha='left')
-#ax.annotate('3 Rs',xy=(0.015,3*1e4),xycoords='data',fontsize=annotfs,ha='left')
-ax.annotate('1 Rs',xy=(0.0048,5*1e8),xycoords='data',fontsize=annotfs,ha='left')
-ax.annotate('17 Rs, ~Alfvén surface',xy=(17*rs,2*1e8),xycoords='data',fontsize=annotfs,ha='left')
-ax.annotate('Sunspots',xy=(0.005,1e8),xycoords='data',fontsize=annotfs,ha='left',zorder=2)
-#ax.annotate('Coronal loops',xy=(0.0065,3*1e6),xycoords='data',fontsize=annotfs,ha='left')
-ax.annotate('Quiet Sun',xy=(0.0065,3*1e6),xycoords='data',fontsize=annotfs,ha='left')
-
-
-
+################# MORE POWER LAWS
 
 #start from quiet Sun
 n3=-3
 const_quiet1=0.46
 ax.plot(fitx,powerlaw(fitx,const_quiet1,n3),'-y',label='dipole field n=-3')
-
 
 #active region with n-3
 const2=20
@@ -1194,6 +1175,18 @@ const3=5*1e-4
 ax.plot(fitx,powerlaw(fitx,const3,n5),'-r',label='coronal decay n=-5')
 
 
+########### plot annotations
+
+annotfs=13
+
+ax.annotate('PSP minimum orbital distance 9.86 Rs',xy=(psp_min+0.001,5*1e5),xycoords='data',fontsize=annotfs,ha='left')
+#ax.annotate('3 Rs',xy=(0.015,3*1e4),xycoords='data',fontsize=annotfs,ha='left')
+ax.annotate('1 Rs',xy=(0.0048,5*1e8),xycoords='data',fontsize=annotfs,ha='left')
+ax.annotate('17 Rs, ~Alfvén surface',xy=(17*rs,2*1e8),xycoords='data',fontsize=annotfs,ha='left')
+ax.annotate('Sunspots',xy=(0.005,1e8),xycoords='data',fontsize=annotfs,ha='left',zorder=2)
+#ax.annotate('Coronal loops',xy=(0.0065,3*1e6),xycoords='data',fontsize=annotfs,ha='left')
+ax.annotate('Quiet Sun',xy=(0.0065,3*1e6),xycoords='data',fontsize=annotfs,ha='left')
+
 ax.legend(fontsize=12,facecolor='white')
 
 ax.xaxis.set_minor_locator(MultipleLocator(0.01))
@@ -1201,17 +1194,15 @@ ax.tick_params(which="both", bottom=True)
 #ax.set_minor_grid('off')
 ax.grid(False, which='minor')
 
-# Setting 
-
-
 plt.tight_layout()
-plt.savefig('results/fig5_br_mo_zoom.png', dpi=150,bbox_inches='tight')
-plt.savefig('results/fig5_br_mo_zoom.pdf', dpi=150,bbox_inches='tight')
+
+plt.savefig('results/fig5_br_mo_zoom.png', dpi=300,bbox_inches='tight')
+plt.savefig('results/fig5_br_mo_zoom.pdf', dpi=300,bbox_inches='tight')
 
 
 # #### same with zoom in on close-in solar distances, for trying out power laws
 
-# In[11]:
+# In[246]:
 
 
 sns.set_context("talk")     
@@ -1656,7 +1647,7 @@ ic.keys()
 
 # ### ICMECAT playground
 
-# In[30]:
+# In[17]:
 
 
 plt.plot(ic.sheath_density_mean[iwin],ic.mo_bmean[iwin],'ko',ms=5)
