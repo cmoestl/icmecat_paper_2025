@@ -8,7 +8,9 @@
 # 
 # - uses environment dro, see /envs/env_dro.yml
 #  
-# - uses ICMECAT version 2.3., release 2025 April 9, update 2025 October *** version TBD on figshare *************** https://doi.org/10.6084/m9.figshare.6356420
+# - uses ICMECAT version 2.3., release 2025 April 9, update 2025 October 15
+# 
+# - https://doi.org/10.6084/m9.figshare.6356420  *add figshare version
 # 
 # - additionally reads in Solar Orbiter and Parker Solar Probe data from data files, available in the figshare repository version ***: https://doi.org/10.6084/m9.figshare.11973693.v25 ** TB changed
 # 
