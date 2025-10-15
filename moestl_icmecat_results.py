@@ -8,36 +8,29 @@
 # 
 # - uses environment dro, see /envs/env_dro.yml
 #  
-# - uses ICMECAT version 2.3., release 2025 April 9, update 2025 October 15
+# - uses ICMECAT version 2.3., release 2025 April 9, update 2025 October 15, https://doi.org/10.6084/m9.figshare.6356420.v24 / this is figshare version 24
 # 
-# - https://doi.org/10.6084/m9.figshare.6356420  *add figshare version
-# 
-# - additionally reads in Solar Orbiter and Parker Solar Probe data from data files, available in the figshare repository version ***: https://doi.org/10.6084/m9.figshare.11973693.v25 ** TB changed
-# 
-# ---
-# ### To do 
-# 
-# - ICMECAT publish, check for errors, include 2025 Sep 1 at L1 
-# - maybe look at power laws for each B component
-# - write up paper
+# - additionally reads in Solar Orbiter and Parker Solar Probe data from data files, available in the figshare repository vesion 27 https://doi.org/10.6084/m9.figshare.11973693.v27
 # 
 # 
 # ---
 # ### papers
 # 
-# - Salman PSP events https://iopscience.iop.org/article/10.3847/1538-4357/ad320c
+# - Salman+2024 PSP events https://iopscience.iop.org/article/10.3847/1538-4357/ad320c
+# - decay index profiles for ARs, but only in AR, too close - https://iopscience.iop.org/article/10.3847/1538-4357/ac5b06
+# - sunspot field strength at 1 solar radii https://link.springer.com/article/10.1007/s11207-006-0265-4
 # 
-# - decay index profiles for ARs, but only in AR, too close
-# https://iopscience.iop.org/article/10.3847/1538-4357/ac5b06
+# ---
+# ### Ideas 
 # 
-# - sunspot field strength at 1 solar radii
-# https://link.springer.com/article/10.1007/s11207-006-0265-4
-# 
+# - maybe look at power laws for each B component
+# - total ICME B field
+# - solar cycle dependence
 # 
 # 
 # 
 
-# In[161]:
+# In[15]:
 
 
 import pickle 
@@ -55,42 +48,32 @@ import copy
 import astropy.constants as const
 from sunpy.time import parse_time
 
-print(scipy.__version__) #for fitting algorithm
-
-#define powerlaw
-def powerlaw(x, a, b):
-    return a*x**b
-
 #one solar radius in au
 rs=(const.R_sun/const.au).value
-print(rs)
-#scaling factor au to Rs
-scale=1/rs
-print(scale)
+print(f'1 solar radii in au {rs:.5f}')
+scale=1/rs #scaling factor au to Rs
+print(f'1 au in solar radii {scale:.5f}')
 
-
-#colors:
-c0 = "xkcd:black"
-c1 = "xkcd:magenta"
-c2 = "xkcd:orange"
-c3 = "xkcd:azure"
-
+#convert to script
 os.system('jupyter nbconvert --to script moestl_icmecat_results.ipynb')
 print(os.system('pwd'))
 
 
+#define powerlaw function
+def powerlaw(x, a, b):
+    return a*x**b
+
+
 # ## load data
 
-# In[162]:
+# In[19]:
 
 
 #load icmecat as pandas dataframe
 file='icmecat/HELIO4CAST_ICMECAT_v23_pandas.p'
-[ic_pandas,h,p]=pickle.load( open(file, 'rb'))   
+[ic,h,p]=pickle.load( open(file, 'rb'))   
 
-ic=ic_pandas
-
-ic_mo_start_time_num=parse_time(ic.mo_start_time)
+ic_mo_start_time_num=parse_time(ic.mo_start_time) #convert to matplotlib time
 
 #get indices for each target
 imes=np.where(ic.sc_insitu=='MESSENGER')[0]
@@ -118,39 +101,32 @@ filesolo='solo_2020_now_rtn.p'
 [solo,hsolo]=pickle.load(open('data/'+filesolo, "rb" ) )    
 print('done')
 
-## load positions file (< 100 MB)
-
+## load positions file (70 MB)
 [psppos, bepi, solopos, sta, juice, earth, mercury, venus, mars, jupiter, saturn, uranus, neptune,l4,l5]=pickle.load( open( 'positions/positions_2020_all_HEEQ_1h_rad_cm.p', "rb" ) ) 
-print('positions file loaded')
+print('all data loaded')
 
 
 # ### Basic ICMECAT statistics
 
-# In[163]:
+# In[27]:
 
 
 print('Number of events in ICMECAT', len(ic))
-
-print('minimum of PSP distance')
-print(np.min(psppos.r))
-
-print('earliest and latest time')
+print()
+print(f'minimum of PSP distance {np.min(psppos.r):.4f}')
+print()
+print('earliest and latest event time')
 print(np.min(ic.icme_start_time))
 print(np.max(ic.icme_start_time))
-
-print('How many events')
-print(np.size(ic.icmecat_id))
-
-print('events from us, MOESTL or WEILER, look up from catalog online')
-
-ourevents=731+75 ###*CHECK
-print(ourevents)
-
-print('percentage')
+print()
+print(f'How many events: {len(ic.icmecat_id)}')
+ourevents=791+15 
+print('events from us, MOESTL or WEILER, look up from catalog online: ', ourevents)
+print('percentage of our events:')
 print(ourevents/np.size(ic.icmecat_id)*100)
-
 print('events without ulysses', len(ic)-len(iuly))
 
+print()
 
 #get indices for each target
 imes=np.where(ic.sc_insitu=='MESSENGER')[0]
@@ -166,40 +142,26 @@ isol=np.where(ic.sc_insitu=='SolarOrbiter')[0]
 ibep=np.where(ic.sc_insitu=='BepiColombo')[0]
 iuly=np.where(ic.sc_insitu=='ULYSSES')[0]
 
-print('closest events of PSP to sun')
-print()
+print('closest events of PSP to sun_')
 print('PSP')
 psp_ids=ic.sort_values('mo_sc_heliodistance')['icmecat_id']
 psp_dist=ic.sort_values('mo_sc_heliodistance')['mo_sc_heliodistance']
 print(psp_ids[0:15])
 print(psp_dist[0:15])
 
-
-#ids_i=ids.index[0:10]
-#print(ids_i)
-
-#names = df.sort_values('age')['name']
-
-
-#print(np.argsort(ic.mo_sc_heliodistance[ipsp]))
-
-
-# In[164]:
-
-
 #sorted indices for psp
 sortpsp=np.argsort(ic.mo_sc_heliodistance[ipsp])
-print(sortpsp[0:10])
+#print(sortpsp[0:10])
 #print(ic.icmecat_id[ipsp][sortpsp])
 #print()
 
-print('SolO')
-print(np.sort(ic.mo_sc_heliodistance[isol])[0:15])
+#print('SolO')
+#print(np.sort(ic.mo_sc_heliodistance[isol])[0:15])
 
 
 # ### Figure (1) for ICMECAT times and distance
 
-# In[165]:
+# In[29]:
 
 
 sns.set_context("paper")     
@@ -269,8 +231,6 @@ ax4.set_ylim([0,1.6])
 ax4.text(0,0,'Sun', color='black', ha='center',fontsize=fsize-5,verticalalignment='top')
 ax4.text(0,1.1,'Earth', color='green', ha='center',fontsize=fsize-5,verticalalignment='center')
 ax4.scatter(0,0,s=100,c='yellow',alpha=1, edgecolors='black', linewidth=0.3)
-
-
 ax4.legend(bbox_to_anchor=(-0.35, 1.05),loc='upper left', fontsize=9)
 
 ##############################################################
@@ -357,7 +317,7 @@ plt.savefig('results/fig1_icmecat_obs.pdf', dpi=150,bbox_inches='tight')
 
 # ### Figure (2) Solar Orbiter example event April 2023
 
-# In[166]:
+# In[6]:
 
 
 sns.set_style('whitegrid')
@@ -477,7 +437,7 @@ print('saved as ',plotfile)
 
 # ### Figure (3) PSP magnetic fields close-to-Sun observations
 
-# In[167]:
+# In[7]:
 
 
 sns.set_style('whitegrid')
@@ -705,7 +665,7 @@ print('saved as ',plotfile)
 # without Ulysses completely similar [10.741 -1.568]
 # 
 
-# In[191]:
+# In[8]:
 
 
 print('B(r) for MO_Bmean')
@@ -735,7 +695,7 @@ print('fit is done for ',len(rmean),' events')
 #plt.plot(rmean[ind1au],bmean[ind1au],'ok',ms=1)
 
 #solar radius in au
-rs=1*const.R_sun/const.au
+#rs=1*const.R_sun/const.au
 print('start fit at 1 solar radii, in AU: ',np.round(rs,4))
 fitx=np.linspace(1*rs,5.5,num=10000)
 
@@ -775,7 +735,7 @@ ax.plot(fitx,powerlaw(fitx,param[0],param[1]),'-b')
 
 # #### Bmax in MO
 
-# In[192]:
+# In[9]:
 
 
 print('B(r) for MO_Bax')
@@ -839,7 +799,7 @@ ax.legend()
 
 # ### Component fits, need to check
 
-# In[233]:
+# In[10]:
 
 
 print('component fits, check what happens < 0')
@@ -918,7 +878,7 @@ print()
 
 # ### Figure (4) B(r) power laws
 
-# In[234]:
+# In[11]:
 
 
 sns.set_context("talk")     
@@ -977,7 +937,7 @@ plt.savefig('results/fig4_br_mo.pdf', dpi=300,bbox_inches='tight')
 
 # ### Figure (5) connecting to solar observations
 
-# In[245]:
+# In[12]:
 
 
 sns.set_context("talk")     
@@ -1204,7 +1164,7 @@ plt.savefig('results/fig5_br_mo_zoom.pdf', dpi=300,bbox_inches='tight')
 
 # #### same with zoom in on close-in solar distances, for trying out power laws
 
-# In[246]:
+# In[13]:
 
 
 sns.set_context("talk")     
@@ -1407,7 +1367,7 @@ plt.savefig('results/fig5_br_mo_zoom_close.png', dpi=150,bbox_inches='tight')
 # ## solar cycle dependence
 # 
 
-# In[12]:
+# In[14]:
 
 
 #####TBD 
@@ -1418,7 +1378,7 @@ plt.savefig('results/fig5_br_mo_zoom_close.png', dpi=150,bbox_inches='tight')
 
 # #### B(r) curve fits in full ICME
 
-# In[13]:
+# In[15]:
 
 
 print('B(r) for ICME Bmean')
@@ -1510,7 +1470,7 @@ ax.plot(fitx,powerlaw(fitx,param4[0],param4[1]),'-b')
 # 
 # 
 
-# In[14]:
+# In[16]:
 
 
 print('D(r)')
@@ -1604,7 +1564,7 @@ ax.plot(fitx,powerlaw(fitx,param[0]+3*perr[0],fit_lm[0][1])+3*perr[0],'--b',alph
 
 # ### some general statistics
 
-# In[15]:
+# In[17]:
 
 
 ic.keys()
@@ -1629,7 +1589,7 @@ print(au/800/60/100)
 print(au/2000/60/100)
 
 
-# In[16]:
+# In[18]:
 
 
 ic.keys()
@@ -1649,16 +1609,10 @@ ic.keys()
 
 # ### ICMECAT playground
 
-# In[17]:
+# In[19]:
 
 
 plt.plot(ic.sheath_density_mean[iwin],ic.mo_bmean[iwin],'ko',ms=5)
-
-
-# In[ ]:
-
-
-
 
 
 # In[ ]:
