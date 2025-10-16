@@ -8,7 +8,7 @@
 # 
 # - uses environment dro, see /envs/env_dro.yml
 #  
-# - uses ICMECAT version 2.3., release 2025 April 9, update 2025 October 15, https://doi.org/10.6084/m9.figshare.6356420.v24 / this is figshare version 24
+# - uses ICMECAT version 2.3, release 2025 April 9, update 2025 October 15, https://doi.org/10.6084/m9.figshare.6356420.v24 / this is figshare version 24
 # 
 # - additionally reads in Solar Orbiter and Parker Solar Probe data from data files, available in the figshare repository vesion 27 https://doi.org/10.6084/m9.figshare.11973693.v27
 # 
@@ -16,21 +16,24 @@
 # ---
 # ### papers
 # 
-# - Salman+2024 PSP events https://iopscience.iop.org/article/10.3847/1538-4357/ad320c
-# - decay index profiles for ARs, but only in AR, too close - https://iopscience.iop.org/article/10.3847/1538-4357/ac5b06
-# - sunspot field strength at 1 solar radii https://link.springer.com/article/10.1007/s11207-006-0265-4
+# - **Salman+ 2024** PSP events, but before Sep 2022 https://iopscience.iop.org/article/10.3847/1538-4357/ad320c
+# - **Mann+ 2023** A&A solar wind model https://www.aanda.org/articles/aa/full_html/2023/11/aa45050-22/aa45050-22.html
+# - **Livingston+ 2006** sunspot field strength at 1 solar radii:https://link.springer.com/article/10.1007/s11207-006-0265-4 on the order of kiloGauss or 10^8 nT (1 Gauss is 10^5 nT)
+# - **Luo and Rui Liu 2022** decay index profiles for ARs, but only in AR, too close - https://iopscience.iop.org/article/10.3847/1538-4357/ac5b06 on the order of 10 Gauss which is 10^6 nT 
+# - **Trelles Arjona+ 2021**, https://iopscience.iop.org/article/10.3847/2041-8213/ac0af2#:~:text=On%20average%2C%20the%20quiet%2DSun,a%20strength%20of%2046%20G.
+# 
 # 
 # ---
 # ### Ideas 
 # 
 # - maybe look at power laws for each B component
-# - total ICME B field
+# - total ICME B field (sheath + MO)
 # - solar cycle dependence
 # 
 # 
 # 
 
-# In[15]:
+# In[25]:
 
 
 import pickle 
@@ -47,12 +50,15 @@ import scipy
 import copy
 import astropy.constants as const
 from sunpy.time import parse_time
+from scipy.optimize import curve_fit
+
 
 #one solar radius in au
 rs=(const.R_sun/const.au).value
 print(f'1 solar radii in au {rs:.5f}')
 scale=1/rs #scaling factor au to Rs
 print(f'1 au in solar radii {scale:.5f}')
+
 
 #convert to script
 os.system('jupyter nbconvert --to script moestl_icmecat_results.ipynb')
@@ -66,7 +72,7 @@ def powerlaw(x, a, b):
 
 # ## load data
 
-# In[19]:
+# In[26]:
 
 
 #load icmecat as pandas dataframe
@@ -149,6 +155,8 @@ psp_dist=ic.sort_values('mo_sc_heliodistance')['mo_sc_heliodistance']
 print(psp_ids[0:15])
 print(psp_dist[0:15])
 
+
+
 #sorted indices for psp
 sortpsp=np.argsort(ic.mo_sc_heliodistance[ipsp])
 #print(sortpsp[0:10])
@@ -158,10 +166,12 @@ sortpsp=np.argsort(ic.mo_sc_heliodistance[ipsp])
 #print('SolO')
 #print(np.sort(ic.mo_sc_heliodistance[isol])[0:15])
 
+print('0.0685 au in solar radii', 0.0685/rs)
+
 
 # ### Figure (1) for ICMECAT times and distance
 
-# In[29]:
+# In[28]:
 
 
 sns.set_context("paper")     
@@ -317,7 +327,7 @@ plt.savefig('results/fig1_icmecat_obs.pdf', dpi=150,bbox_inches='tight')
 
 # ### Figure (2) Solar Orbiter example event April 2023
 
-# In[6]:
+# In[29]:
 
 
 sns.set_style('whitegrid')
@@ -437,7 +447,7 @@ print('saved as ',plotfile)
 
 # ### Figure (3) PSP magnetic fields close-to-Sun observations
 
-# In[7]:
+# In[30]:
 
 
 sns.set_style('whitegrid')
@@ -651,11 +661,11 @@ plt.savefig(plotfile)
 print('saved as ',plotfile)
 
 
-# ## B(r) curve fits in magnetic obstacle
+# ## B(r) curve fits with power laws directly (B mean in magnetic obstacle)
 
 # #### Bmean in MO
 # 
-# results: for distance \
+# results: for distance 
 # 
 # < 1.1 a and b are [10.742 -1.568] \
 # < 1.0 a and b are [10.71  -1.569]\
@@ -665,7 +675,7 @@ print('saved as ',plotfile)
 # without Ulysses completely similar [10.741 -1.568]
 # 
 
-# In[8]:
+# In[31]:
 
 
 print('B(r) for MO_Bmean')
@@ -735,7 +745,7 @@ ax.plot(fitx,powerlaw(fitx,param[0],param[1]),'-b')
 
 # #### Bmax in MO
 
-# In[9]:
+# In[32]:
 
 
 print('B(r) for MO_Bax')
@@ -797,9 +807,305 @@ ax.plot(fitx,powerlaw(fitx,param2[0],param2[1]),'-r',label='MO Bmax')
 ax.legend()
 
 
-# ### Component fits, need to check
+# ### redo fit in log log space
+# 
+# for all up to 5.5 au
+# Slope: -1.4653 ± 0.0155
+# Intercept (nonlog): 10.1984 ± 0.0044
+# 
+# for up to 1.1 au
+# Slope: -1.5947 ± 0.0303
+# Intercept (nonlog): 9.9153 ± 0.0051
+# 
+# from 0.8 to 1.05 au
+# Slope: -1.4706 ± 0.3472
+# Intercept (nonlog): 9.9243 ± 0.0067
+# 
+# 
+# from 0 to 1.05 au
+# Slope: -1.5914 ± 0.0307
+# Intercept (nonlog): 9.9354 ± 0.0053
+# 
+
+# In[35]:
+
+
+print('B(r) for MO_Bmean')
+
+
+#print('start fit at 1 solar radii, in AU: ',np.round(rs,4))
+fitx=np.linspace(1*rs,5.5,num=10000)
+
+####linear fit 
+def linear(x, k, d):
+    return k * x + d
+
+
+######################## fit 1
+r=ic.mo_sc_heliodistance
+b=ic.mo_bmean
+
+#remove events where one or both are nan
+rem=np.where(np.logical_or(np.isnan(r), np.isnan(b)))[0]
+r=r.drop(rem)
+b=b.drop(rem)
+
+#remove ulysses because high latitude
+#r=r.drop(iuly)
+#b=b.drop(iuly)
+
+#select distance range
+mindistfit1=0
+maxdistfit1=1.02 #(STEREO-B goes to < 1.09, Wind goes to < 1.02
+ind1au=np.where(np.logical_and(ic.mo_sc_heliodistance < maxdistfit1,ic.mo_sc_heliodistance > mindistfit1))[0]
+
+rmeanlog1=np.log10(r[ind1au])
+bmeanlog1=np.log10(b[ind1au])
+#rmean=r
+#bmean=b
+
+print('fit is done for ',len(rmeanlog1),' events')
+#Fit with covariance matrix
+params1, covariance1 = curve_fit(linear, rmeanlog1, bmeanlog1)
+k1, d1 = params1
+k1_err, d1_err = np.sqrt(np.diag(covariance1))
+print(f"Slope: {k1:.4f} ± {k1_err:.4f}")
+print(f"Intercept (nonlog): {10**d1:.4f} ± {d1_err:.4f}")
+print('fit distance range',mindistfit1,'-',maxdistfit1,' au')
+###################
+print()
+print()
+
+
+######################## fit 2
+r=ic.mo_sc_heliodistance
+b=ic.mo_bmean
+
+#remove events where one or both are nan
+rem=np.where(np.logical_or(np.isnan(r), np.isnan(b)))[0]
+r=r.drop(rem)
+b=b.drop(rem)
+
+#remove ulysses because high latitude
+#r=r.drop(iuly)
+#b=b.drop(iuly)
+
+#select distance range
+mindistfit2=0.0
+maxdistfit2=6.0
+ind1au=np.where(np.logical_and(ic.mo_sc_heliodistance < maxdistfit2,ic.mo_sc_heliodistance > mindistfit2))[0]
+
+rmeanlog2=np.log10(r[ind1au])
+bmeanlog2=np.log10(b[ind1au])
+#rmean=r
+#bmean=b
+
+print('fit is done for ',len(rmeanlog2),' events')
+
+# Fit with covariance matrix
+params2, covariance2 = curve_fit(linear, rmeanlog2, bmeanlog2)
+k2, d2 = params2
+k2_err, d2_err = np.sqrt(np.diag(covariance2))
+print(f"Slope: {k2:.4f} ± {k2_err:.4f}")
+print(f"Intercept (nonlog): {10**d2:.4f} ± {d2_err:.4f}")
+print('fit distance range',mindistfit2,'-',maxdistfit2,' au')
+
+
+#------plot 
+fig=plt.figure(3,figsize=(12,10),dpi=50)
+ax=plt.subplot(211)
+ax.plot(rmeanlog1,bmeanlog1,'ok', markersize=1)
+ax.plot(rmeanlog1,linear(rmeanlog1,k1,d1),'-k')
+
+
+#------plot 
+fig=plt.figure(4,figsize=(12,10),dpi=50)
+ax=plt.subplot(211)
+ax.plot(rmeanlog2,bmeanlog2,'ok', markersize=1)
+ax.plot(rmeanlog2,linear(rmeanlog2,k2,d2),'-k')
+
+
+# ## Power law with multipole expansion
+
+# In[36]:
+
+
+print('B(r) for MO_Bmean')
+
+r=ic.mo_sc_heliodistance
+b=ic.mo_bmean
+
+#remove events where one or both are nan
+rem=np.where(np.logical_or(np.isnan(r), np.isnan(b)))[0]
+r=r.drop(rem)
+b=b.drop(rem)
+
+#remove ulysses because high latitude
+#r=r.drop(iuly)
+#b=b.drop(iuly)
+
+#select distance range
+ind1au=np.where(np.logical_and(ic.mo_sc_heliodistance < 6.0,ic.mo_sc_heliodistance > 0.0))[0]
+
+rmean=r[ind1au]
+bmean=b[ind1au]
+#rmean=r
+#bmean=b
+
+print('fit is done for ',len(rmean),' events')
+
+#plt.plot(rmean[ind1au],bmean[ind1au],'ok',ms=1)
+
+#solar radius in au
+#rs=1*const.R_sun/const.au
+print('start fit at 1 solar radii, in AU: ',np.round(rs,4))
+fitx=np.linspace(1*rs,5.5,num=10000)
+
+###### define AR point at 2 kg
+
+###*
+
+
+#define powerlaw function
+def multipolelaw(x, a, b, a1, b2, a2, b2, a3, b3):
+    return a*x**b+a1*x**b1+a2*x**b2+a3*x**b3
+
+####### start here
+
+fit_lm=scipy.optimize.curve_fit(powerlaw, rmean,bmean,method='lm',full_output=True)
+fit_trf=scipy.optimize.curve_fit(powerlaw, rmean,bmean,method='trf')
+fit_dogbox=scipy.optimize.curve_fit(powerlaw, rmean,bmean,method='dogbox')
+
+print('LM, TRF dogbox methods power law parameters')
+print(np.round(fit_trf[0],3))
+print(np.round(fit_lm[0],3))
+print(np.round(fit_dogbox[0],3))
+
+# https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.curve_fit.html
+# discussion of variance for MO Bmean
+param=fit_lm[0]
+pcov=fit_lm[1]
+perr = np.sqrt(np.diag(pcov))
+print('LM results in detail:')
+print('Parameters a and b, y = a x^b:',np.round(param,3))
+print('3 standard deviation on a and b', 3*np.round(perr,3))
+print()
+print()
+
+#------plot 
+fig=plt.figure(3,figsize=(12,10),dpi=100)
+ax=plt.subplot(211)
+ax.plot(rmean,bmean,'ok', markersize=1)
+ax.set_yscale('log')
+ax.set_xlim(0,6)
+ax.plot(fitx,powerlaw(fitx,param[0],param[1]),'-b')
+
+
+# In[ ]:
+
+
+
+
+
+# In[ ]:
+
+
+
+
+
+# In[ ]:
+
+
+
+
+
+# In[ ]:
+
+
+
+
+
+# In[ ]:
+
+
+
+
+
+# In[ ]:
+
+
+
+
+
+# In[ ]:
+
+
+
+
+
+# In[ ]:
+
+
+
+
+
+# In[ ]:
+
+
+
+
+
+# In[ ]:
+
+
+
+
+
+# In[ ]:
+
+
+
+
+
+# ### Solar wind models
 
 # In[10]:
+
+
+#Mann 2023 radial Btot solar wind model Parker 1958, from Mariani and Neubauer 1990
+
+#equation 16
+#units solar radii R
+fitxrs=np.linspace(1*rs,5.5,num=10000)/rs
+b0sw=(2.51+0.78)/2*1e5  #parameters B0 is in Gauss, Mann+ 2023  range 0.78−2.51 nT , use mean 
+print(b0sw*1e-5)
+asw=1.538 
+Brsw=b0sw*fitxrs/((asw**2+fitxrs**2)**(3/2))
+
+#equation 8
+Brsw2=(6/fitxrs**3+1.18/fitxrs**2)*1e5
+
+
+fig=plt.figure(5,figsize=(12,10),dpi=100)
+ax=plt.subplot(211)
+ax.plot(rmean,bmean,'ok', markersize=0.5)
+ax.plot(rmean,bmean,'or', markersize=0.5)
+ax.set_yscale('log')
+ax.set_xlim(0,0.3)
+ax.set_ylim(1e1,1e6)
+
+ax.plot(psp.r,psp.bt,'-g',linewidth=0.2, label='Parker Solar Probe |B|')
+ax.plot(fitx,Brsw,'k',label='solar wind model 1')
+ax.plot(fitx,Brsw2,'k',linestyle='-.',label='solar wind model 2')
+
+ax.plot(fitx,powerlaw(fitx,param[0],param[1]),'-b',label='MO Bmean')
+ax.legend()
+
+
+
+# ### Component fits, need to check
+
+# In[11]:
 
 
 print('component fits, check what happens < 0')
@@ -878,17 +1184,20 @@ print()
 
 # ### Figure (4) B(r) power laws
 
-# In[11]:
+# In[12]:
 
 
 sns.set_context("talk")     
 sns.set_style('whitegrid')
 
 ###############################################################################
-fig=plt.figure(3,figsize=(14,7),dpi=100)
+fig=plt.figure(3,figsize=(14,13),dpi=100)
+
+
+gs = fig.add_gridspec(2, 2, hspace=0.3, wspace=0.3,height_ratios=[1.7, 1])
 
 ##############################################################################
-ax=plt.subplot(111)
+ax = fig.add_subplot(gs[0, :])
 #plt.title('ICMECAT mean magnetic field in the magnetic obstacle')
 ax.set_xlabel('Heliocentric distance $R$ [au]')
 ax.set_ylabel('Magnetic field magnitude $B$ [nT]')
@@ -905,6 +1214,8 @@ ax.plot(ic.mo_sc_heliodistance[iuly],ic.mo_bmean[iuly],'o',c='chocolate', alpha=
 ax.plot(ic.mo_sc_heliodistance[imav],ic.mo_bmean[imav],'o',c='orangered', alpha=al,ms=ms, label='MAVEN')
 ax.plot(ic.mo_sc_heliodistance[istb],ic.mo_bmean[istb],'o',c='royalblue', alpha=al,ms=ms, label='STEREO-B')
 ax.plot(ic.mo_sc_heliodistance[ijun],ic.mo_bmean[ijun],'o', c='black',markerfacecolor='yellow', alpha=al,ms=ms, label='Juno')
+ax.text(-0.08, 1.05, '(a)', transform=ax.transAxes, fontsize=16, fontweight='bold', va='top')
+
 
 au_axis=np.arange(0,5.5,0.2)
 ax.set_xticks(au_axis)
@@ -929,7 +1240,34 @@ formulastring=r'$\mathrm{max}(B_{MO}(R)) = '+str(np.round(param2[0],2))+r' \time
 ax.annotate(formulastring,xy=(0.4,0.66),xycoords='axes fraction',fontsize=15,ha='center',bbox=dict(boxstyle='round', facecolor='white'))
 
 ax.legend(loc=1,fontsize=11)
-plt.tight_layout()
+
+############### Bottom left plot
+ax2 = fig.add_subplot(gs[1, 0])
+ax2.plot(rmeanlog1,bmeanlog1,'o', markersize=1.5, alpha=0.9, color='dimgrey')
+ax2.plot(rmeanlog1,linear(rmeanlog1,k1,d1),'-k',linewidth=1)
+ax2.set_ylim(-0.5,3.1)
+ax2.set_xlabel(r'$\log_{10}(R \text{[au]})$')
+ax2.set_ylabel(r'$\log_{10}(B \text{[nT]})$')
+ax2.text(-0.15, 1.05, '(b)', transform=ax2.transAxes, fontsize=16, fontweight='bold', va='top')
+strd=f'{np.round(10**d1, 2):.2f}+'
+formulastring=r'$\mathrm{mean}(B_{MO}(R)) ='+strd+r' \times R^{'+str(np.round(k1,2))+'}$'
+ax2.annotate(formulastring,xy=(0.4,0.1),xycoords='axes fraction',fontsize=12,ha='center',bbox=dict(boxstyle='round', facecolor='white'))
+
+
+############### Bottom right plot
+ax3 = fig.add_subplot(gs[1, 1])
+ax3.plot(rmeanlog2,bmeanlog2,'o', markersize=1.5, alpha=0.9,color='dimgrey')
+ax3.plot(rmeanlog2,linear(rmeanlog2,k2,d2),'-k',linewidth=1)
+ax3.set_ylim(-0.5,3.1)
+ax3.set_xlabel(r'$\log_{10}(R \text{[au]})$')
+ax3.set_ylabel(r'$\log_{10}(B \text{[nT]})$')
+ax3.text(-0.15, 1.05, '(c)', transform=ax3.transAxes, fontsize=16, fontweight='bold', va='top')
+
+strd=f'{np.round(10**d2, 2):.2f}+'
+formulastring=r'$\mathrm{mean}(B_{MO}(R)) ='+strd+r' \times R^{'+str(np.round(k2,2))+'}$'
+ax3.annotate(formulastring,xy=(0.4,0.1),xycoords='axes fraction',fontsize=12,ha='center',bbox=dict(boxstyle='round', facecolor='white'))
+
+#plt.tight_layout()
 
 plt.savefig('results/fig4_br_mo.png', dpi=300,bbox_inches='tight')
 plt.savefig('results/fig4_br_mo.pdf', dpi=300,bbox_inches='tight')
@@ -937,7 +1275,7 @@ plt.savefig('results/fig4_br_mo.pdf', dpi=300,bbox_inches='tight')
 
 # ### Figure (5) connecting to solar observations
 
-# In[12]:
+# In[13]:
 
 
 sns.set_context("talk")     
@@ -958,7 +1296,7 @@ ax.plot(solo.r,solo.bt,'-b',linewidth=0.2, label='Solar Orbiter |B|')
 
 ax.plot(ic.mo_sc_heliodistance[imes],ic.mo_bmean[imes],'o',c='coral', alpha=al,ms=ms,label='MESSENGER ICMEs')
 ax.plot(ic.mo_sc_heliodistance[ibep],ic.mo_bmean[ibep],'o',c='darkblue',markerfacecolor='lightgrey', alpha=al,ms=ms,label='BepiColombo ICMEs')
-ax.plot(ic.mo_sc_heliodistance[ipsp],ic.mo_bmean[ipsp],'o',c='black', alpha=1.0,ms=ms, label='Parker Solar Probe ICMEs')
+ax.plot(ic.mo_sc_heliodistance[ipsp],ic.mo_bmean[ipsp],'o',c='black', alpha=1.0,ms=ms, label='Parker Solar Probe ICMEs',zorder=3)
 ax.plot(ic.mo_sc_heliodistance[isol],ic.mo_bmean[isol],'o',c='black', markerfacecolor='white',alpha=al,ms=ms, label='Solar Orbiter ICMEs')
 
 #ax3.set_xscale('log')
@@ -987,18 +1325,22 @@ ax1.patch.set_visible(True)
 
 ######################## plot power law from fits, #param is the bmean fit
 
-ax.plot(fitx,powerlaw(fitx,param[0],param[1]),'-k',label='mean($B_{MO}$) fit, n= -1.57')
+ax.plot(fitx,powerlaw(fitx,param[0],param[1]),'-k',label='mean($B_{MO}$) fit, n= -1.57', zorder=3)
 #with errors 3 std
 #ax3.plot(fitx,powerlaw(fitx,param[0]-3*perr[0],fit_lm[0][1])-3*perr[0],'--k',alpha=0.5)
 #ax3.plot(fitx,powerlaw(fitx,param[0]+3*perr[0],fit_lm[0][1])+3*perr[0],'--k',alpha=0.5)
 
+
+########### solar wind model
+
+ax.plot(fitx,Brsw2,color='orange',linestyle='-.',label='solar wind model')
 
 ########################## add solar data points
 
 gauss=1e5 #1 Gauss= 10^5 nT
 #sunspot field strength at 1 solar radii
 #https://link.springer.com/article/10.1007/s11207-006-0265-4
-#average 2000 Gauss
+#average 2000 Gauss, or 0.2 Tesla, or 2 x 10^8 nT
 
 sunspot_dist=const.R_sun/const.au #1 Rs correct
 sunspot_b=2000*gauss              #general value for ARs fine?
@@ -1012,8 +1354,6 @@ ax.plot(sunspot_dist,sunspot_b,marker='s', markerfacecolor='white',markersize='1
 #ax.plot(coronal_dist,coronal_b,marker='s', markerfacecolor='white',markersize='10')
 
 #quiet sun 46 Gauss
-#https://iopscience.iop.org/article/10.3847/2041-8213/ac0af2#:~:text=On%20average%2C%20the%20quiet%2DSun,a%20strength%20of%2046%20G.
-
 quiet_dist1=1*rs   #1 Rs correct
 quiet_b1=46*gauss              
 ax.errorbar(quiet_dist1,quiet_b1,yerr=0,marker='s', markerfacecolor='white',markersize='10',capsize=5)
@@ -1164,7 +1504,7 @@ plt.savefig('results/fig5_br_mo_zoom.pdf', dpi=300,bbox_inches='tight')
 
 # #### same with zoom in on close-in solar distances, for trying out power laws
 
-# In[13]:
+# In[14]:
 
 
 sns.set_context("talk")     
@@ -1281,6 +1621,9 @@ ax.annotate('Quiet Sun',xy=(0.0042,80*gauss),xycoords='data',fontsize=annotfs,ha
 ax.annotate('1 Gauss',xy=(1.3*0.0048,1.2*1e5),xycoords='data',fontsize=annotfs,ha='left')
 
 
+########## solar wind model
+ax.plot(fitx,powerlaw(fitx,const_quiet1,n3),'-g',label='power law for coronal decay n=-3')
+
 
 #try out powerlaw from 1 Rs with -1, -2, -3 decay index n
 
@@ -1290,6 +1633,9 @@ n2=-2
 #start from quiet Sun
 n3=-3
 const_quiet1=0.5
+
+#n35=-3.5
+#const_quiet1=0.03
 ax.plot(fitx,powerlaw(fitx,const_quiet1,n3),'-g',label='power law for coronal decay n=-3')
 
 
@@ -1305,9 +1651,9 @@ n7=-7
 const2=1e-8
 ax.plot(fitx,powerlaw(fitx,const2,n7),'-y',label='power law for coronal decay n=-7')
 
-n9=-9
-const2=2*1e-13
-ax.plot(fitx,powerlaw(fitx,const2,n9),'-r',label='power law for coronal decay n=-9')
+#n9=-9
+#const2=2*1e-13
+#ax.plot(fitx,powerlaw(fitx,const2,n9),'-r',label='power law for coronal decay n=-9')
 
 
 
@@ -1367,7 +1713,7 @@ plt.savefig('results/fig5_br_mo_zoom_close.png', dpi=150,bbox_inches='tight')
 # ## solar cycle dependence
 # 
 
-# In[14]:
+# In[15]:
 
 
 #####TBD 
@@ -1378,7 +1724,7 @@ plt.savefig('results/fig5_br_mo_zoom_close.png', dpi=150,bbox_inches='tight')
 
 # #### B(r) curve fits in full ICME
 
-# In[15]:
+# In[16]:
 
 
 print('B(r) for ICME Bmean')
@@ -1470,7 +1816,7 @@ ax.plot(fitx,powerlaw(fitx,param4[0],param4[1]),'-b')
 # 
 # 
 
-# In[16]:
+# In[17]:
 
 
 print('D(r)')
@@ -1564,7 +1910,7 @@ ax.plot(fitx,powerlaw(fitx,param[0]+3*perr[0],fit_lm[0][1])+3*perr[0],'--b',alph
 
 # ### some general statistics
 
-# In[17]:
+# In[18]:
 
 
 ic.keys()
@@ -1589,7 +1935,7 @@ print(au/800/60/100)
 print(au/2000/60/100)
 
 
-# In[18]:
+# In[19]:
 
 
 ic.keys()
@@ -1607,12 +1953,46 @@ ic.keys()
 
 
 
-# ### ICMECAT playground
-
-# In[19]:
+# In[ ]:
 
 
-plt.plot(ic.sheath_density_mean[iwin],ic.mo_bmean[iwin],'ko',ms=5)
+
+
+
+# In[ ]:
+
+
+
+
+
+# In[ ]:
+
+
+
+
+
+# In[ ]:
+
+
+
+
+
+# In[ ]:
+
+
+
+
+
+# In[ ]:
+
+
+
+
+
+# In[ ]:
+
+
+
 
 
 # In[ ]:
